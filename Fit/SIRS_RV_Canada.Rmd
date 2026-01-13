@@ -1,0 +1,430 @@
+---
+title: "SIRS fit to RV cases (Canada)"
+output: pdf_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(plyr)
+library(lubridate)
+library(cowplot)
+library(ggpubr)
+library(rstan)
+library(bridgesampling)
+
+source("Fit/Functions_fit.R")
+```
+
+# Data
+
+```{r}
+load("Data/Canada/data_canada_province.RData") # import data
+```
+
+```{r}
+data_ca$IAV_scaled_cases_smooth <- smooth_cases(data_ca)
+data_at$IAV_scaled_cases_smooth <- smooth_cases(data_at)
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_on$IAV_scaled_cases_smooth <- smooth_cases(data_on)
+data_pr$IAV_scaled_cases_smooth <- smooth_cases(data_pr)
+
+plot_grid(
+  
+  ggplot(data_ca, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ggplot(data_at, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ggplot(data_bc, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ggplot(data_on, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ggplot(data_pr, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ncol=2)
+```
+# Stan inputs
+
+```{r}
+n_chains <- 4 # = number of cores as well
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma <- 2 # approx 8 days for recovery
+mu <- 1/80/52 # natural mortality
+
+pop <- read.csv("Data/Canada/Canada_pop_size.csv")
+```
+
+```{r}
+data_ca_stan <- data_stan(data=data_ca, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="Canada"])
+data_at_stan <- data_stan(data=data_at, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="Atlantic"])
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+data_on_stan <- data_stan(data=data_on, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="Ontario"])
+data_pr_stan <- data_stan(data=data_pr, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="Prairies"])
+```
+
+# With potential viral interaction
+
+```{r}
+model <- stan_model("Fit/Stan_models/SIRS_npi_vi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "phi", "omega", "rho", "S0", "I0", "sigma")
+```
+
+------- National (Canada) ------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_ca_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_ca.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_ca.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_ca.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_ca)
+plot_beta(posterior)
+```
+
+------- Atlantic ---------------------------------------------------------------
+  
+The model didn't converge  
+
+```{r, eval=FALSE}
+# fit <- sampling(model, data=data_at_stan,
+#                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+#                 control=list(adapt_delta=0.95, max_treedepth=15),
+#                 cores=n_chains)
+# 
+# saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_at.RDS")
+# saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_at.RDS")
+```
+
+```{r}
+# fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_at.RDS")
+# 
+# check_hmc_diagnostics(fit)
+# get_num_divergent(fit)
+# get_num_max_treedepth(fit)
+# get_low_bfmi_chains(fit)
+# get_bfmi(fit)
+# 
+# summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+# posterior <- extract(fit)
+# 
+# traceplot(fit, pars=parms)
+# pairs(fit, pars=parms)
+# plot_fit(posterior, data_at)
+# plot_beta(posterior)
+```
+
+------- British Columbia --------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_bc_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_bc.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_bc.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_bc)
+plot_beta(posterior)
+```
+
+------- Ontario ----------------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_on_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_on.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_on.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_on.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_on)
+plot_beta(posterior)
+```
+
+------- Prairies ---------------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_pr_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_pr.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_pr.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_pr.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_pr)
+plot_beta(posterior)
+```
+
+# Without viral interaction
+
+```{r}
+model <- stan_model("Fit/Stan_models/SIRS_npi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "omega", "rho", "S0", "I0", "sigma")
+```
+
+------- National (Canada) ------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_ca_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_ca.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_ca.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_ca.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_ca)
+plot_beta(posterior)
+```
+
+------- Atlantic ---------------------------------------------------------------
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_at_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_at.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_at.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_at.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_at)
+plot_beta(posterior)
+```
+
+------- British Columbia --------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_bc_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_bc.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_bc.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_bc.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_bc)
+plot_beta(posterior)
+```
+
+------- Ontario ----------------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_on_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_on.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_on.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_on.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_on)
+plot_beta(posterior)
+```
+
+------- Prairies ---------------------------------------------------------------
+  
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_pr_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_pr.RDS")
+saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_pr.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_pr.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:4,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_pr)
+plot_beta(posterior)
+```
