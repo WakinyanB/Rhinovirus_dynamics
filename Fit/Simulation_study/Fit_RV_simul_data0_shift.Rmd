@@ -1,0 +1,435 @@
+---
+title: "Fit SIRS to RV cases (simulated data #0 shift)"
+output: pdf_document
+date: "2025-07-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(dplyr)
+library(cowplot)
+library(rstan)
+library(loo)
+```
+
+# Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_shift_0.RData")
+real_parms <- readRDS("Data/Simulation/parms0_simul.rds")
+
+obs_rv <- obs_shift_rv
+obs_iav <- obs_shift_iav
+
+obs_rv_prepand <- obs_rv %>% subset(time<=52*6)
+obs_iav_prepand <- obs_iav %>% subset(time<=52*6)
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy_sdlow)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy_sdlow)) +
+    geom_point(aes(y=smooth_cases_noisy_sdlow), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy_sdhigh)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy_sdhigh)) +
+    geom_point(aes(y=smooth_cases_noisy_sdhigh), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+```{r}
+n_chains <- 4
+n_warmup <- 1000
+n_iter <- n_warmup + 2000
+
+gamma_rv <- log(1/(1-real_parms[["gamma_rv"]])) # approx 8 days on average
+mu <- real_parms[["mu"]]
+pop <- real_parms[["pop"]]
+```
+
+```{r}
+plot_fit <- function(posterior, data){
+  return(
+    data.frame("time"=1:data$n_week,
+               "observed"=data$obs,
+               "fitted"=apply(posterior$cases, 2, median),
+               "lower"=apply(posterior$cases, 2, quantile, probs=0.025),
+               "upper"=apply(posterior$cases, 2, quantile, probs=0.975)) %>%
+      ggplot(aes(x=time)) +
+      geom_ribbon(aes(ymin=lower, ymax=upper), fill="red", alpha=0.5) +  # Credible interval
+      geom_line(aes(y=fitted), color = "red", linewidth=0.1) +  # Posterior median
+      geom_point(aes(y = observed), cex=0.5) +  # Observed cases
+      theme_minimal() +
+      theme(axis.title.x=element_blank())
+  )
+}
+
+plot_beta <- function(posterior){
+  return(
+    posterior$beta %>% apply(2, function(X){
+      return(data.frame("mean"=mean(X),
+                        "CI95_lower"=quantile(X, probs=0.025),
+                        "CI95_upper"=quantile(X, probs=0.975), row.names=NULL))
+  }) %>% bind_rows %>% cbind("week"=1:52,.) %>%
+    ggplot(aes(x=week, y=mean)) +
+    geom_ribbon(aes(ymin=CI95_lower, ymax=CI95_upper), fill="red", col=NA, alpha=0.5) +
+    geom_line(aes(y=mean), col="red") +
+    theme_classic()
+  )
+}
+```
+
+# No viral interaction
+
+## All data
+
+```{r}
+data_RV_stan_sdlow <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy_sdlow,
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+
+data_RV_stan_sdhigh <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy_sdhigh,
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r}
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "omega", "rho", "S0", "I0", "sigma")
+
+model <- stan_model("Fit/Stan_models/SIRS_npi.stan")
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_RV_stan_sdlow,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.9, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_simul0_shift_sdlow.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_simul0_shift_sdlow.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_RV_stan_sdlow)
+plot_beta(posterior)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_RV_stan_sdhigh,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.9, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_simul0_shift_sdhigh.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_simul0_shift_sdhigh.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_RV_stan_sdhigh)
+plot_beta(posterior)
+```
+
+## Prepandemic only
+
+```{r}
+data_prepand_RV_stan_sdlow <- list(
+  n_week=nrow(obs_rv_prepand),
+  week=obs_rv_prepand$week,
+  obs=obs_rv_prepand$cases_noisy_sdlow,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+
+data_prepand_RV_stan_sdhigh <- list(
+  n_week=nrow(obs_rv_prepand),
+  week=obs_rv_prepand$week,
+  obs=obs_rv_prepand$cases_noisy_sdhigh,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r}
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "omega", "rho", "S0", "I0", "sigma")
+
+model <- stan_model("Fit/Stan_models/SIRS.stan")
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_prepand_RV_stan_sdlow,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_simul0_shift_sdlow.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_simul0_shift_sdlow.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_prepand_RV_stan_sdlow)
+plot_beta(posterior)
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_prepand_RV_stan_sdhigh,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_simul0_shift_sdhigh.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_simul0_shift_sdhigh.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_prepand_RV_stan_sdhigh)
+plot_beta(posterior)
+```
+
+# With potential viral interaction
+
+## All data
+
+```{r}
+data_RV_stan_sdlow$obs_IAV <- obs_iav$smooth_cases_noisy_sdlow/
+  max(obs_iav$smooth_cases_noisy_sdlow)
+data_RV_stan_sdhigh$obs_IAV <- obs_iav$smooth_cases_noisy_sdhigh/
+  max(obs_iav$smooth_cases_noisy_sdhigh)
+```
+
+```{r}
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "phi", "omega", "rho", "S0", "I0", "sigma")
+
+model <- stan_model("Fit/Stan_models/SIRS_npi_vi.stan")
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_RV_stan_sdlow,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul0_shift_sdlow.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul0_shift_sdlow.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_RV_stan_sdlow)
+plot_beta(posterior)
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_RV_stan_sdhigh,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.9, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul0_shift_sdhigh.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul0_shift_sdhigh.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_RV_stan_sdhigh)
+plot_beta(posterior)
+```
+
+## Prepandemic only
+
+```{r}
+data_prepand_RV_stan_sdlow$obs_IAV <- obs_iav_prepand$smooth_cases_noisy_sdlow/
+  max(obs_iav$smooth_cases_noisy_sdlow)
+data_prepand_RV_stan_sdhigh$obs_IAV <- obs_iav_prepand$smooth_cases_noisy_sdhigh/
+  max(obs_iav$smooth_cases_noisy_sdhigh)
+```
+
+```{r}
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "phi", "omega", "rho", "S0", "I0", "sigma")
+
+model <- stan_model("Fit/Stan_models/SIRS_vi.stan")
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_prepand_RV_stan_sdlow,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_vi_simul0_shift_sdlow.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_vi_simul0_shift_sdlow.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_prepand_RV_stan_sdlow)
+plot_beta(posterior)
+```
+
+```{r, eval=TRUE}
+fit <- sampling(model, data=data_prepand_RV_stan_sdhigh,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_vi_simul0_shift_sdhigh.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_vi_simul0_shift_sdhigh.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_prepand_RV_stan_sdhigh)
+plot_beta(posterior)
+```
