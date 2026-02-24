@@ -300,34 +300,34 @@ plot_beta(posterior)
 ------- Atlantic ---------------------------------------------------------------
 
 ```{r, eval=FALSE}
-fit <- sampling(model, data=data_at_stan,
-                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
-                control=list(adapt_delta=0.99, max_treedepth=15),
-                cores=n_chains)
-
-saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_at.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_at.RDS")
+# fit <- sampling(model, data=data_at_stan,
+#                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+#                 control=list(adapt_delta=0.99, max_treedepth=15),
+#                 cores=n_chains)
+# 
+# saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_at.RDS")
+# saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_at.RDS")
 ```
 
 ```{r}
-fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_at.RDS")
-
-check_hmc_diagnostics(fit)
-get_num_divergent(fit)
-get_num_max_treedepth(fit)
-get_low_bfmi_chains(fit)
-get_bfmi(fit)
-
-summary(fit)$summary[c(1:4,53:60),]
+# fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_at.RDS")
+# 
+# check_hmc_diagnostics(fit)
+# get_num_divergent(fit)
+# get_num_max_treedepth(fit)
+# get_low_bfmi_chains(fit)
+# get_bfmi(fit)
+# 
+# summary(fit)$summary[c(1:4,53:60),]
 ```
 
 ```{r}
-posterior <- extract(fit)
-
-traceplot(fit, pars=parms)
-pairs(fit, pars=parms)
-plot_fit(posterior, data_at)
-plot_beta(posterior)
+# posterior <- extract(fit)
+# 
+# traceplot(fit, pars=parms)
+# pairs(fit, pars=parms)
+# plot_fit(posterior, data_at)
+# plot_beta(posterior)
 ```
 
 ------- British Columbia --------------------------------------------------------

@@ -23,6 +23,19 @@ data_stan <- function(data, mu, gamma, pop){
   )
 }
 
+data_stan2 <- function(data, constants, pop){
+  
+  return(
+    list(
+      n_week=nrow(data),
+      week=ifelse(data$week==53, yes=1, no=data$week),
+      obs=ifelse(data$RV_scaled_cases==0, 0.1, data$RV_scaled_cases),
+      obs_IAV=data$IAV_scaled_cases_smooth/max(data$IAV_scaled_cases_smooth),
+      c=data$c,
+      pop=pop) %>% c(., constants)
+    )
+}
+
 plot_fit <- function(posterior, data){
   return(
     data.frame("time"=data$date,

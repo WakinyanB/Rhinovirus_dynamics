@@ -129,7 +129,7 @@ plot_beta(posterior)
 
 ------- Atlantic ---------------------------------------------------------------
   
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # fit <- sampling(model, data=data_at_stan,
 #                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
 #                 control=list(adapt_delta=0.99, max_treedepth=15),

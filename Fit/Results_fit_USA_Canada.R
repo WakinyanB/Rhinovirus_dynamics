@@ -8,7 +8,7 @@ library(cowplot)
 library(ggpubr)
 library(ggnewscale)
 library(rstan)
-library(bridgesampling)
+library(loo)
 
 setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
 
@@ -218,26 +218,29 @@ phi_estim <- rbind(
 colnames(phi_estim)[4:6] <- c('median', 'CI_lower', 'CI_upper')
 
 phi_estim$region <- phi_estim$region %>% factor(levels=rev(c(US_names, CA_names)))
-phi_estim$lag <- phi_estim$lag %>% factor(levels=c(5,3,1,0))
+phi_estim$lag <- phi_estim$lag %>% factor(levels=c('5','3','1','0'),
+                                          labels=c('5','3','1','0 (current incidence)'))
 
 pd <- position_dodge(width=0.6)
 
 x_lim <- c(-0.21,0.3)
-colors <- c('pink', '#8255A1', '#1F007F', 'black')
+
+colors <- c('pink', '#B63778', '#7B2383', '#420F77')
 
 plot_grid(
   phi_estim %>%
     subset(country=="US") %>%
     ggplot(aes(y=region)) +
     geom_vline(xintercept=0, lwd=0.2, lty='dashed') +
-    labs(col=expression(paste(italic('l')~' (lag)'))) +
+    labs(col='lag in IAV incidence') +
     geom_segment(aes(x=CI_lower, xend=CI_upper, col=lag), position=pd, lwd=0.2) +
-    geom_point(aes(x=median, col=lag), cex=0.75, position=pd) +
+    geom_point(aes(x=median, col=lag), pch=18, cex=1.5, position=pd) +
     scale_x_continuous(limits=x_lim, labels=scales::percent) +
     scale_color_manual(values=colors) +
     theme_bw() +
     theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(),
-          axis.title.y=element_blank(), axis.text.y=element_text(size=8), legend.position=c(0.85,0.8)) +
+          axis.title.y=element_blank(), axis.text.y=element_text(size=8), legend.position=c(0.78,0.82),
+          legend.title=element_text(size=8), legend.text=element_text(size=6)) +
     guides(color=guide_legend(reverse=TRUE)),
 
   phi_estim %>%
@@ -246,7 +249,7 @@ plot_grid(
     geom_vline(xintercept=0, lwd=0.2, lty='dashed') +
     labs(x="\nMax. change in transmission due to viral interaction") +
     geom_segment(aes(x=CI_lower, xend=CI_upper, col=lag), position=pd, lwd=0.2) +
-    geom_point(aes(x=median, col=lag), cex=0.75, position=pd) +
+    geom_point(aes(x=median, col=lag), pch=18, cex=1.5, position=pd) +
     scale_x_continuous(limits=x_lim, labels=scales::percent) +
     scale_color_manual(values=colors) +
     theme_bw() +
@@ -421,20 +424,49 @@ theme_US <- theme(axis.title.x=element_text(size=12),
 
 colors_CA <- c("#DA5E06", "#E82789", "#6A65AE", "#109A70")
 
+beta_US <- rbind(
+  cbind("location"="US (national)", summary_beta(p_us)),
+  #cbind("location"="HHS 1", summary_beta(p_hhs1)),
+  cbind("location"="HHS 2", summary_beta(p_hhs2)),
+  cbind("location"="HHS 3", summary_beta(p_hhs3)),
+  cbind("location"="HHS 4", summary_beta(p_hhs4)),
+  cbind("location"="HHS 5", summary_beta(p_hhs5)),
+  cbind("location"="HHS 6", summary_beta(p_hhs6)),
+  cbind("location"="HHS 7", summary_beta(p_hhs7)),
+  cbind("location"="HHS 8", summary_beta(p_hhs8)),
+  cbind("location"="HHS 9", summary_beta(p_hhs9)),
+  cbind("location"="HHS 10", summary_beta(p_hhs10))) %>%
+  mutate(location=factor(location, levels=US_names))
+
+beta_CA <- rbind(
+  cbind("location"="Canada (national)", summary_beta(p_ca)),
+  cbind("location"="British Columbia", summary_beta(p_bc)),
+  cbind("location"="Ontario", summary_beta(p_on)),
+  cbind("location"="Prairies", summary_beta(p_pr))) %>%
+  mutate(location=factor(location, levels=CA_names))
+
 plot_grid(
+  Plot_beta(beta_US, ylim=c(0.5,4.6), ncol=5) + theme(axis.text.x=element_text(size=7)),
   
-  plot_distribution(p_list=p_list_CA, parm="omega", colors=colors_CA, duration=TRUE,
-                    xlab=expression(paste(hat(Omega), " (weeks)"))) +
-    scale_x_continuous(breaks=seq(2,16,2)) +
+  plot_distribution(p_list=p_list_US, parm="omega", duration=TRUE, scale=4,
+                    xlab=expression(paste(hat(Omega), ", mean duration of immune protection (weeks)"))) +
+    scale_x_continuous(breaks=seq(5,25,5), limits=c(0,28)) +
     theme(axis.title.x=element_text(size=10),
           axis.title.y=element_blank(), axis.text.y=element_text(size=10),
           legend.position='none'),
-  plot_distribution(p_list=p_list_US, parm="omega", duration=TRUE, scale=4,
-                    xlab=expression(paste(hat(Omega), " (weeks)"))) +
-    scale_x_continuous(breaks=seq(5,25,5), limits=c(3,30)) +
+  
+  Plot_beta(beta_CA, ylim=c(0.8,2.1), ncol=2) + theme(plot.margin=unit(c(0,1.5,0,1.5), "cm")),
+  
+  plot_distribution(p_list=p_list_CA, parm="omega", colors=colors_CA, duration=TRUE,
+                    xlab=expression(paste(hat(Omega), ", mean duration of immune protection (weeks)"))) +
+    scale_x_continuous(breaks=seq(5,25,5), limits=c(0,28)) +
     theme(axis.title.x=element_text(size=10),
-          axis.title.y=element_blank(), axis.text.y=element_text(size=7),
+          axis.title.y=element_blank(), axis.text.y=element_text(size=10),
           legend.position='none'),
+  
+  labels=LETTERS[1:4], rel_widths=c(0.6,0.4), rel_heights=c(0.55,0.45), ncol=2) # 10 x 7
+
+plot_grid(
   
   plot_distribution(p_list=p_list_CA, parm="kappa", colors=colors_CA, xlab=expression(hat(kappa))) +
     scale_x_continuous(breaks=seq(0.4,1,0.1)) + theme_CA,
@@ -458,34 +490,6 @@ plot_grid(
   
   ncol=2, labels=LETTERS[1:10]
 ) # 10 x 9
-
-beta_US <- rbind(
-  cbind("location"="US (national)", summary_beta(p_us)),
-  #cbind("location"="HHS 1", summary_beta(p_hhs1)),
-  cbind("location"="HHS 2", summary_beta(p_hhs2)),
-  cbind("location"="HHS 3", summary_beta(p_hhs3)),
-  cbind("location"="HHS 4", summary_beta(p_hhs4)),
-  cbind("location"="HHS 5", summary_beta(p_hhs5)),
-  cbind("location"="HHS 6", summary_beta(p_hhs6)),
-  cbind("location"="HHS 7", summary_beta(p_hhs7)),
-  cbind("location"="HHS 8", summary_beta(p_hhs8)),
-  cbind("location"="HHS 9", summary_beta(p_hhs9)),
-  cbind("location"="HHS 10", summary_beta(p_hhs10))) %>%
-  mutate(location=factor(location, levels=US_names))
-
-beta_CA <- rbind(
-  cbind("location"="Canada (national)", summary_beta(p_ca)),
-  cbind("location"="British Columbia", summary_beta(p_bc)),
-  cbind("location"="Ontario", summary_beta(p_on)),
-  cbind("location"="Prairies", summary_beta(p_pr))) %>%
-  mutate(location=factor(location, levels=CA_names))
-
-plot_grid(
-  Plot_beta(beta_US, ylim=c(0.5,4.6), ncol=5),
-  Plot_beta(beta_CA, ylim=c(0.8,2.1), ncol=2) +
-    theme(axis.title.y.left=element_text(margin=margin(r=10, l=40, unit="pt")),
-          axis.title.y.right=element_text(margin=margin(r=40, l=10, unit="pt"))),
-  labels=LETTERS[1:2], rel_heights=c(0.55,0.45), ncol=1) # 8 x 7
 
 # Fitted values
 
@@ -636,6 +640,6 @@ plot_grid(
               cbind('vi'='1', summary_fit(p_ca_lag0, data_ca))),
     Re=rbind(cbind('vi'='0', Summary_Re(p_ca, data_ca)),
              cbind('vi'='1', Summary_Re(p_ca_lag0, data_ca, vi=TRUE))),
-    location="Canada"),
+    location="Canada", legend=FALSE),
   
   labels=LETTERS[1:2], ncol=2) # landscape: 9 x 7

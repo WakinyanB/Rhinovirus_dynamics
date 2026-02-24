@@ -18,7 +18,6 @@ library(lubridate)
 library(cowplot)
 library(ggpubr)
 library(rstan)
-library(bridgesampling)
 
 source("Fit/Functions_fit.R")
 ```
@@ -94,7 +93,6 @@ fit <- sampling(model, data=data_us_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_us.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_us.RDS")
 ```
 
 ```{r}
@@ -122,14 +120,13 @@ plot_beta(posterior)
 
 The model didn't converge
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # fit <- sampling(model, data=data_hhs1_stan,
 #                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
 #                 control=list(adapt_delta=0.999, max_treedepth=15),
 #                 cores=n_chains)
 # 
 # saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs1.RDS")
-#saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs1.RDS")
 ```
 
 ```{r}
@@ -162,7 +159,6 @@ fit <- sampling(model, data=data_hhs2_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs2.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs2.RDS")
 ```
 
 ```{r}
@@ -195,7 +191,6 @@ fit <- sampling(model, data=data_hhs3_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs3.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs3.RDS")
 ```
 
 ```{r}
@@ -228,7 +223,6 @@ fit <- sampling(model, data=data_hhs4_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs4.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs4.RDS")
 ```
 
 ```{r}
@@ -261,7 +255,6 @@ fit <- sampling(model, data=data_hhs5_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs5.RDS")
 ```
 
 ```{r}
@@ -294,7 +287,6 @@ fit <- sampling(model, data=data_hhs6_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs6.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs6.RDS")
 ```
 
 ```{r}
@@ -327,7 +319,6 @@ fit <- sampling(model, data=data_hhs7_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs7.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs7.RDS")
 ```
 
 ```{r}
@@ -360,7 +351,6 @@ fit <- sampling(model, data=data_hhs8_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs8.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs8.RDS")
 ```
 
 ```{r}
@@ -393,7 +383,6 @@ fit <- sampling(model, data=data_hhs9_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs9.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs9.RDS")
 ```
 
 ```{r}
@@ -426,7 +415,6 @@ fit <- sampling(model, data=data_hhs10_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs10.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs10.RDS")
 ```
 
 ```{r}
@@ -467,7 +455,6 @@ fit <- sampling(model, data=data_us_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_us.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_us.RDS")
 ```
 
 ```{r}
@@ -493,14 +480,13 @@ plot_beta(posterior)
 
 ------- HHS 1 ------------------------------------------------------------------
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # fit <- sampling(model, data=data_hhs1_stan,
 #                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
 #                 control=list(adapt_delta=0.95, max_treedepth=15),
 #                 cores=n_chains)
 # 
 # saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs1.RDS")
-# saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs1.RDS")
 ```
 
 ```{r}
@@ -533,7 +519,6 @@ fit <- sampling(model, data=data_hhs2_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs2.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs2.RDS")
 ```
 
 ```{r}
@@ -566,7 +551,6 @@ fit <- sampling(model, data=data_hhs3_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs3.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs3.RDS")
 ```
 
 ```{r}
@@ -599,7 +583,6 @@ fit <- sampling(model, data=data_hhs4_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs4.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs4.RDS")
 ```
 
 ```{r}
@@ -632,7 +615,6 @@ fit <- sampling(model, data=data_hhs5_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs5.RDS")
 ```
 
 ```{r}
@@ -665,7 +647,6 @@ fit <- sampling(model, data=data_hhs6_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs6.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs6.RDS")
 ```
 
 ```{r}
@@ -698,7 +679,6 @@ fit <- sampling(model, data=data_hhs7_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs7.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs7.RDS")
 ```
 
 ```{r}
@@ -731,7 +711,6 @@ fit <- sampling(model, data=data_hhs8_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs8.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs8.RDS")
 ```
 
 ```{r}
@@ -764,7 +743,6 @@ fit <- sampling(model, data=data_hhs9_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs9.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs9.RDS")
 ```
 
 ```{r}
@@ -797,7 +775,6 @@ fit <- sampling(model, data=data_hhs10_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_hhs10.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_hhs10.RDS")
 ```
 
 ```{r}

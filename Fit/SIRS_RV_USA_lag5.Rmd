@@ -198,7 +198,7 @@ plot_beta(posterior)
   
 ```{r, eval=FALSE}
 fit <- sampling(model, data=data_hhs3_stan,
-                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
                 control=list(adapt_delta=0.99, max_treedepth=15),
                 cores=n_chains)
 
@@ -361,7 +361,7 @@ plot_beta(posterior)
 
 ------- HHS 8 ------------------------------------------------------------------
   
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fit <- sampling(model, data=data_hhs8_stan,
                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
                 control=list(adapt_delta=0.99, max_treedepth=15),
@@ -394,7 +394,7 @@ plot_beta(posterior)
 
 ------- HHS 9 ------------------------------------------------------------------
   
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fit <- sampling(model, data=data_hhs9_stan,
                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
                 control=list(adapt_delta=0.99, max_treedepth=15),
@@ -427,7 +427,7 @@ plot_beta(posterior)
 
 ------- HHS 10 -----------------------------------------------------------------
   
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fit <- sampling(model, data=data_hhs10_stan,
                 chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
                 control=list(adapt_delta=0.95, max_treedepth=15),
