@@ -34,9 +34,9 @@ parameters{
 
 transformed parameters{
   
-  vector<lower=0>[n_week+1] S; // Susceptible/N
-  vector<lower=0>[n_week+1] I; // Infected/N = prevalence
-  vector<lower=0>[n_week+1] R; // Recovered/N
+  vector<lower=0>[n_week+1] S; // Susceptible
+  vector<lower=0>[n_week+1] I; // Infected = prevalence*N
+  vector<lower=0>[n_week+1] R; // Recovered
   vector<lower=0>[n_week] cases; // rescaled number of cases
   
   vector[52] beta; // weekly transmission rate
@@ -79,7 +79,7 @@ model{
   logbeta0 ~ normal(log(2.5),0.25);
 	eps_beta ~ normal(0,1);
   sigma_beta ~ normal(0,0.2);
-  phi ~ normal(0,0.2);
+  phi ~ normal(0,0.25);
   omega ~ normal(0,0.2);
   rho ~ beta(1,99);
   S0 ~ beta(7,1);

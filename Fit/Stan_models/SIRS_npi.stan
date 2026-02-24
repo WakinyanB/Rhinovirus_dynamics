@@ -34,9 +34,9 @@ parameters{
 
 transformed parameters{
   
-  vector<lower=0>[n_week+1] S; // Susceptible/N
-  vector<lower=0>[n_week+1] I; // Infected/N = prevalence
-  vector<lower=0>[n_week+1] R; // Recovered/N
+  vector<lower=0>[n_week+1] S; // Susceptible
+  vector<lower=0>[n_week+1] I; // Infected = prevalence*N
+  vector<lower=0>[n_week+1] R; // Recovered
   vector<lower=0>[n_week] cases; // rescaled number of cases
   
   vector[52] beta; // weekly transmission rate
