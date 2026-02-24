@@ -1,0 +1,186 @@
+---
+title: "SIRS fit to RV cases (Canada) -- refit"
+output: pdf_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(plyr)
+library(rstan)
+
+source("Fit/Functions_fit.R")
+```
+
+# Data
+
+```{r}
+load("Data/Canada/data_canada_province.RData") # import data
+```
+
+# Stan inputs
+
+```{r}
+n_chains <- 4 # = number of cores as well
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma <- 2 # approx 8 days for recovery
+mu <- 1/80/52 # natural mortality
+
+pop <- read.csv("Data/Canada/Canada_pop_size.csv")
+```
+
+## Without viral interaction
+
+```{r}
+model <- stan_model("Fit/Stan_models/LOO/SIRS_npi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "omega", "rho", "S0", "I0", "sigma")
+```
+
+```{r}
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+```
+
+```{r, eval=TRUE}
+data_bc_stan2 <- data_bc_stan
+data_bc_stan2$n_fit <- data_bc_stan$n_week-3
+data_bc_stan2$fit_index <- (1:data_bc_stan$n_week)[-c(138,147,204)]
+
+fit <- sampling(model, data=data_bc_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1234,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_bc_rm.RDS")
+```
+
+# With potential viral interaction
+
+```{r}
+model <- stan_model("Fit/Stan_models/LOO/SIRS_npi_vi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "phi", "omega", "rho", "S0", "I0", "sigma")
+```
+
+## lag 0
+
+```{r}
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+```
+
+```{r, eval=TRUE}
+data_bc_stan2 <- data_bc_stan
+data_bc_stan2$n_fit <- data_bc_stan$n_week-3
+data_bc_stan2$fit_index <- (1:data_bc_stan$n_week)[-c(138,147,204)]
+
+fit <- sampling(model, data=data_bc_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc_rm.RDS")
+```
+
+## Lag 1
+
+```{r}
+data_bc$IAV_scaled_cases <- data_bc$IAV_scaled_cases_lag1
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+```
+
+```{r, eval=TRUE}
+data_bc_stan2 <- data_bc_stan
+data_bc_stan2$n_fit <- data_bc_stan$n_week-3
+data_bc_stan2$fit_index <- (1:data_bc_stan$n_week)[-c(138,147,204)]
+
+fit <- sampling(model, data=data_bc_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc_lag1_rm.RDS")
+```
+
+## Lag 3
+
+```{r}
+data_bc$IAV_scaled_cases <- data_bc$IAV_scaled_cases_lag3
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+```
+
+```{r, eval=TRUE}
+data_bc_stan2 <- data_bc_stan
+data_bc_stan2$n_fit <- data_bc_stan$n_week-3
+data_bc_stan2$fit_index <- (1:data_bc_stan$n_week)[-c(138,147,204)]
+
+fit <- sampling(model, data=data_bc_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc_lag3_rm.RDS")
+```
+
+## Lag 5
+
+```{r}
+data_bc$IAV_scaled_cases <- data_bc$IAV_scaled_cases_lag5
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_bc_stan <- data_stan(data=data_bc, mu=mu, gamma=gamma, pop=pop$pop_2021[pop$Province=="British Columbia"])
+```
+
+```{r, eval=TRUE}
+data_bc_stan2 <- data_bc_stan
+data_bc_stan2$n_fit <- data_bc_stan$n_week-3
+data_bc_stan2$fit_index <- (1:data_bc_stan$n_week)[-c(138,147,204)]
+
+fit <- sampling(model, data=data_bc_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.99, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc_lag5_rm.RDS")
+```

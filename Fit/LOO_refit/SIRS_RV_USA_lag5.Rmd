@@ -1,0 +1,160 @@
+---
+title: "SIRS fit to RV cases (USA) -- lag 5 (refit)"
+output: pdf_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(plyr)
+library(lubridate)
+library(cowplot)
+library(ggpubr)
+library(rstan)
+
+source("Fit/Functions_fit.R")
+```
+
+# Data
+
+```{r}
+load("Data/USA/Data_USA.RData") # import data
+```
+
+```{r}
+data_us$IAV_scaled_cases <- data_us$IAV_scaled_cases_lag5
+data_hhs1$IAV_scaled_cases <- data_hhs1$IAV_scaled_cases_lag5
+data_hhs2$IAV_scaled_cases <- data_hhs2$IAV_scaled_cases_lag5
+data_hhs3$IAV_scaled_cases <- data_hhs3$IAV_scaled_cases_lag5
+data_hhs4$IAV_scaled_cases <- data_hhs4$IAV_scaled_cases_lag5
+data_hhs5$IAV_scaled_cases <- data_hhs5$IAV_scaled_cases_lag5
+data_hhs6$IAV_scaled_cases <- data_hhs6$IAV_scaled_cases_lag5
+data_hhs7$IAV_scaled_cases <- data_hhs7$IAV_scaled_cases_lag5
+data_hhs8$IAV_scaled_cases <- data_hhs8$IAV_scaled_cases_lag5
+data_hhs9$IAV_scaled_cases <- data_hhs9$IAV_scaled_cases_lag5
+data_hhs10$IAV_scaled_cases <- data_hhs10$IAV_scaled_cases_lag5
+
+data_us$IAV_scaled_cases_smooth <- smooth_cases(data_us)
+data_hhs1$IAV_scaled_cases_smooth <- smooth_cases(data_hhs1)
+data_hhs2$IAV_scaled_cases_smooth <- smooth_cases(data_hhs2)
+data_hhs3$IAV_scaled_cases_smooth <- smooth_cases(data_hhs3)
+data_hhs4$IAV_scaled_cases_smooth <- smooth_cases(data_hhs4)
+data_hhs5$IAV_scaled_cases_smooth <- smooth_cases(data_hhs5)
+data_hhs6$IAV_scaled_cases_smooth <- smooth_cases(data_hhs6)
+data_hhs7$IAV_scaled_cases_smooth <- smooth_cases(data_hhs7)
+data_hhs8$IAV_scaled_cases_smooth <- smooth_cases(data_hhs8)
+data_hhs9$IAV_scaled_cases_smooth <- smooth_cases(data_hhs9)
+data_hhs10$IAV_scaled_cases_smooth <- smooth_cases(data_hhs10)
+```
+
+# Stan inputs
+
+```{r}
+n_chains <- 4 # = number of cores as well
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma <- 2 # approx 8 days for recovery
+mu <- 1/80/52 # natural mortality
+
+pop <- read.csv("Data/USA/State_2020_pop.csv")
+
+pop_us <- sum(pop$pop_2020)
+
+pop_HHS <- pop %>% ddply(~HHS_region, function(X){
+  return(c('pop_2020'=sum(X$pop_2020)))
+})
+```
+
+```{r}
+data_us_stan <- data_stan(data=data_us, mu=mu, gamma=gamma, pop=pop_us)
+
+data_hhs1_stan <- data_stan(data=data_hhs1, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="1"])
+data_hhs2_stan <- data_stan(data=data_hhs2, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="2"])
+data_hhs3_stan <- data_stan(data=data_hhs3, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="3"])
+data_hhs4_stan <- data_stan(data=data_hhs4, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="4"])
+data_hhs5_stan <- data_stan(data=data_hhs5, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="5"])
+data_hhs6_stan <- data_stan(data=data_hhs6, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="6"])
+data_hhs7_stan <- data_stan(data=data_hhs7, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="7"])
+data_hhs8_stan <- data_stan(data=data_hhs8, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="8"])
+data_hhs9_stan <- data_stan(data=data_hhs9, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="9"])
+data_hhs10_stan <- data_stan(data=data_hhs10, mu=mu, gamma=gamma, pop=pop_HHS$pop_2020[pop_HHS$HHS_region=="10"])
+```
+
+# With viral interaction
+
+```{r}
+model <- stan_model("Fit/Stan_models/SIRS_npi_vi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]",
+           "phi", "kappa", "omega", "rho", "S0", "I0", "sigma")
+```
+
+------- HHS 2 ------------------------------------------------------------------
+
+```{r, eval=TRUE}
+data_hhs2_stan2 <- data_hhs2_stan
+data_hhs2_stan2$n_fit <- data_hhs2_stan$n_week-1
+data_hhs2_stan2$fit_index <- (1:data_hhs2_stan$n_week)[-4]
+
+fit <- sampling(model, data=data_hhs2_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs2_lag5_rm.RDS")
+```
+
+------- HHS 5 ------------------------------------------------------------------
+  
+```{r, eval=TRUE}
+data_hhs5_stan2 <- data_hhs5_stan
+data_hhs5_stan2$n_fit <- data_hhs5_stan$n_week-2
+data_hhs5_stan2$fit_index <- (1:data_hhs5_stan$n_week)[-c(342,343)]
+
+fit <- sampling(model, data=data_hhs5_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs5_lag5_rm.RDS")
+```
+
+------- HHS 10 -----------------------------------------------------------------
+  
+```{r, eval=TRUE}
+data_hhs10_stan2 <- data_hhs10_stan
+data_hhs10_stan2$n_fit <- data_hhs10_stan$n_week-1
+data_hhs10_stan2$fit_index <- (1:data_hhs10_stan$n_week)[-335]
+
+fit <- sampling(model, data=data_hhs10_stan2,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs10_lag5_rm.RDS")
+```
