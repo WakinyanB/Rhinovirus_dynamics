@@ -71,19 +71,13 @@ Relative_error <- function(s, real_parms, dt=1){
   )
 }
 
-Plot_rel_err <- function(s_sdlow, s_npi_sdlow, s_vi_sdlow, s_npi_vi_sdlow,
-                         s_sdhigh, s_npi_sdhigh, s_vi_sdhigh, s_npi_vi_sdhigh,
-                         real_parms, dt=1){
+Plot_rel_err <- function(s, s_npi, s_vi, s_npi_vi, real_parms, dt=1){
+  
   rel_err <- rbind(
-    data.frame(sd_obs="low", npi="0", vi="0", Relative_error(s_sdlow, real_parms, dt=dt)),
-    data.frame(sd_obs="low", npi="1", vi="0", Relative_error(s_npi_sdlow, real_parms, dt=dt)),
-    data.frame(sd_obs="low", npi="0", vi="1", Relative_error(s_vi_sdlow, real_parms, dt=dt)),
-    data.frame(sd_obs="low", npi="1", vi="1", Relative_error(s_npi_vi_sdlow, real_parms, dt=dt)),
-    
-    data.frame(sd_obs="high", npi="0", vi="0", Relative_error(s_sdhigh, real_parms, dt=dt)),
-    data.frame(sd_obs="high", npi="1", vi="0", Relative_error(s_npi_sdhigh, real_parms, dt=dt)),
-    data.frame(sd_obs="high", npi="0", vi="1", Relative_error(s_vi_sdhigh, real_parms, dt=dt)),
-    data.frame(sd_obs="high", npi="1", vi="1", Relative_error(s_npi_vi_sdhigh, real_parms, dt=dt))
+    data.frame(npi="0", vi="0", Relative_error(s, real_parms, dt=dt)),
+    data.frame(npi="1", vi="0", Relative_error(s_npi, real_parms, dt=dt)),
+    data.frame(npi="0", vi="1", Relative_error(s_vi, real_parms, dt=dt)),
+    data.frame(npi="1", vi="1", Relative_error(s_npi_vi, real_parms, dt=dt))
   ) %>%
     mutate(parm=factor(parm, levels=c("kappa", "DR", "rho", "S0", "I0")))
   
@@ -93,22 +87,21 @@ Plot_rel_err <- function(s_sdlow, s_npi_sdlow, s_vi_sdlow, s_npi_vi_sdlow,
   return(
     rel_err %>%
       mutate(npi=factor(npi, levels=c("0","1"),
-                        labels=c("Prepandemic", "Whole~dataset")),
-             sd_obs=factor(sd_obs, levels=c("low","high"),
-                           labels=c("Low~obs.~noise~(sigma==0.08)", "High~obs.~noise~(sigma==0.4)"))) %>%
+                        labels=c("Pre-pandemic data", "Including\n(post-)pandemic data"))) %>%
       ggplot(aes(x=parm, y=median, fill=vi)) +
       geom_hline(yintercept=0, lty="dashed", linewidth=0.3) +
-      facet_grid(npi~sd_obs, labeller=label_parsed) +
+      facet_grid(~npi) +
       labs(y="Relative error", col=expression(phi), fill=expression(phi)) +
       geom_segment(aes(y=CI95_lower, yend=CI95_upper, col=vi), linewidth=0.4, position=pd) +
       geom_point(pch=21, size=1.5, stroke=0.1, position=pd) +
       scale_x_discrete(labels=c(expression(hat(kappa)), expression(hat(Omega)), expression(hat(rho)),
                                 expression(hat(S)[0]), expression(hat(I)[0]))) +
-      scale_y_continuous(labels=percent_format()) +
-      scale_color_manual(values=c("#800080", "#FFA500"), labels=label_col) +
-      scale_fill_manual(values=c("#800080", "#FFA500"), labels=label_col) +
+      scale_y_continuous(labels=percent_format(), breaks=seq(-3,3,0.5)) +
+      scale_color_manual(values=c("#FFA500", "#800080"), labels=label_col) +
+      scale_fill_manual(values=c("#FFA500", "#800080"), labels=label_col) +
       theme_test() +
-      theme(axis.title.x=element_blank(), axis.text.x=element_text(size=11))
+      theme(axis.title.x=element_blank(), axis.text.x=element_text(size=11),
+            legend.text=element_text(size=11), legend.title=element_text(size=17))
   )
 }
 
@@ -116,204 +109,65 @@ R0_estim <- function(beta_estim, gamma, mu, dt=1){
   return(data.frame("week"=1:52, beta_estim[,-1]*(1-exp(-mu*dt))/(1-exp(-(mu+gamma)*dt))/mu))
 }
 
-Plot_R0 <- function(beta_sdlow, beta_npi_sdlow, beta_vi_sdlow, beta_npi_vi_sdlow,
-                    beta_sdhigh, beta_npi_sdhigh, beta_vi_sdhigh, beta_npi_vi_sdhigh,
-                    real_parms, custom_beta=FALSE, dt=1){
+Plot_R0 <- function(beta, beta_npi, beta_vi, beta_npi_vi, real_parms, custom_beta=FALSE, dt=1){
   
   gamma <- -log(1-real_parms$gamma*dt)/dt
   
   R0_estim_tab <- rbind(
     
-    data.frame(sd_obs="low", npi="0", vi="0", R0_estim(beta_sdlow, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="low", npi="1", vi="0", R0_estim(beta_npi_sdlow, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="low", npi="0", vi="1", R0_estim(beta_vi_sdlow, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="low", npi="1", vi="1", R0_estim(beta_npi_vi_sdlow, gamma, real_parms$mu, dt)),
-    
-    data.frame(sd_obs="high", npi="0", vi="0", R0_estim(beta_sdhigh, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="high", npi="1", vi="0", R0_estim(beta_npi_sdhigh, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="high", npi="0", vi="1", R0_estim(beta_vi_sdhigh, gamma, real_parms$mu, dt)),
-    data.frame(sd_obs="high", npi="1", vi="1", R0_estim(beta_npi_vi_sdhigh, gamma, real_parms$mu, dt))
-  )
-  
-  label_col <- c('0 (fixed)', 'estimated')
+    data.frame(npi="0", vi="0", R0_estim(beta, gamma, real_parms$mu, dt)),
+    data.frame(npi="1", vi="0", R0_estim(beta_npi, gamma, real_parms$mu, dt)),
+    data.frame(npi="0", vi="1", R0_estim(beta_vi, gamma, real_parms$mu, dt)),
+    data.frame(npi="1", vi="1", R0_estim(beta_npi_vi, gamma, real_parms$mu, dt))
+  ) %>%
+    mutate(vi=factor(vi, levels=c('1','0'), labels=c('estimated','0 (fixed)')))
   
   if(custom_beta){
     seasonal_beta <- real_parms$beta
   }else{
     seasonal_beta <- real_parms$b0*(1+real_parms$a1*cos(4*pi*((1:52)/52-real_parms$d1))+
-                                  real_parms$a2*cos(2*pi*((1:52)/52-(real_parms$d1+real_parms$d2))))
+                                      real_parms$a2*cos(2*pi*((1:52)/52-(real_parms$d1+real_parms$d2))))
   }
   
   R0_estim_tab %>%
-    mutate(npi=factor(npi, levels=c("0","1"), labels=c("Prepandemic", "Whole~dataset")),
-           sd_obs=factor(sd_obs, levels=c("low","high"),
-                         labels=c("Low~obs.~noise~(sigma==0.08)", "High~obs.~noise~(sigma==0.4)"))) %>%
+    mutate(npi=factor(npi, labels=c("Pre-pandemic data", "Including\n(post-)pandemic data"))) %>%
     ggplot(aes(x=week)) +
-    facet_grid(npi~sd_obs, labeller=label_parsed) +
+    facet_grid(~npi) +
     geom_ribbon(aes(ymin=CI95_lower, ymax=CI95_upper, col=vi, fill=vi), lwd=0.15, alpha=0.25) +
     geom_line(aes(y=median, col=vi)) +
-    labs(y="Basic reproduction number", col=expression(phi), fill=expression(phi)) +
+    labs(y="Basic repro-\nduction number", col=expression(phi), fill=expression(phi)) +
     geom_line(data=data.frame("week"=1:52,
                               "R0_real"=seasonal_beta/(real_parms$gamma+real_parms$mu)), aes(y=R0_real), lty='dashed', lwd=0.2) +
     scale_x_continuous(expand=c(0,0), breaks=c(1,seq(10,50,10))) +
-    scale_color_manual(values=c("#800080", "#FFA500"), labels=label_col) +
-    scale_fill_manual(values=c("#800080", "#FFA500"), labels=label_col) +
+    scale_color_manual(values=c("#800080","#FFA500")) +
+    scale_fill_manual(values=c("#800080", "#FFA500")) +
     theme_test() +
-    theme(legend.text=element_text(size=11), legend.title=element_text(size=17))
+    theme(axis.title.y=element_text(size=10),
+          legend.text=element_text(size=11), legend.title=element_text(size=17))
 }
 
-Plot_phi <- function(p_vi_sdlow, p_npi_vi_sdlow, p_vi_sdhigh, p_npi_vi_sdhigh,
-                     obs_iav, SIR, real_parms){
+Plot_phi <- function(p_vi, p_npi_vi, real_max_vi){
   
-  n_prepand <- ncol(p_vi_sdlow$cases)
-  
-  I_IAV <- subset(SIR,pathogen=="IAV")$I
-  
-  range_vi_real <- rbind(
-    data.frame("npi"="Prepandemic",
-               "vi_min"=min(real_parms$phi*I_IAV[1:n_prepand]/real_parms$pop),
-               "vi_max"=max(real_parms$phi*I_IAV[1:n_prepand]/real_parms$pop)),
-    data.frame("npi"="Whole dataset",
-               "vi_min"=min(real_parms$phi*I_IAV/real_parms$pop),
-               "vi_max"=max(real_parms$phi*I_IAV/real_parms$pop))
-  )
-  
-  IAV_sdlow <- obs_iav$smooth_cases_noisy_sdlow/max(obs_iav$smooth_cases_noisy_sdlow)
-  IAV_sdhigh <- obs_iav$smooth_cases_noisy_sdhigh/max(obs_iav$smooth_cases_noisy_sdhigh)
+  n_prepand <- ncol(p_vi$cases)
   
   phi_distrib <- rbind(
-    data.frame("phi"=p_vi_sdlow$phi*max(IAV_sdlow[1:n_prepand]), npi="Prepandemic", sd_obs="0.08"),
-    data.frame("phi"=p_npi_vi_sdlow$phi*max(IAV_sdlow), npi="Whole dataset", sd_obs="0.08"),
-    data.frame("phi"=p_vi_sdhigh$phi*max(IAV_sdhigh[1:n_prepand]), npi="Prepandemic", sd_obs="0.4"),
-    data.frame("phi"=p_npi_vi_sdhigh$phi*max(IAV_sdhigh), npi="Whole dataset", sd_obs="0.4")
-  )
+    data.frame(npi='0', phi=p_vi$phi),
+    data.frame(npi='1', phi=p_npi_vi$phi)
+  ) %>%
+    mutate(npi=factor(npi, labels=c('Pre-pandemic data', 'Including (post-)\npandemic data')))
   
   return(
-    phi_distrib %>% ddply(~npi+sd_obs, function(X){
-      return(
-        data.frame("median"=median(X$phi),
-                   "CI95_lower"=quantile(X$phi, probs=0.025),
-                   "CI95_upper"=quantile(X$phi, probs=0.975),
-                   row.names=NULL)
-        )
-      }) %>% bind_rows %>%
-      ggplot() +
-      facet_wrap(~npi, nrow=2) +
+    phi_distrib %>%
+      ggplot(aes(x=npi)) +
       geom_hline(yintercept=0, linewidth=0.6, col="grey70") +
-      geom_hline(data=range_vi_real, aes(yintercept=vi_min), linewidth=0.3, lty='dashed') +
-      
-      labs(x=expression(sigma),
-           y="Max. change due to viral interaction") +
-      geom_violin(data=phi_distrib, aes(x=sd_obs, y=phi, fill=sd_obs), trim=FALSE, col=NA, alpha=0.5) +
-      geom_segment(aes(x=sd_obs, y=CI95_lower, yend=CI95_upper), linewidth=0.25) +
-      geom_point(aes(x=sd_obs, y=median, fill=sd_obs), shape=21, col="black", size=1.5) +
-      scale_y_continuous(labels=percent_format()) +
-      scale_fill_manual(values=c("#0F3F87", "#AED4E7")) +
-      theme_test() +
-      theme(axis.title.x=element_text(size=15),
-            legend.position='none')
-    )
-  }
-
-summary_LL <- function(posterior, first_index_pandemic=NA){
-  
-  colnames <- c("mean", "CI95_lower", "CI95_upper")
-  data_id <- c("All", "Prepandemic", "(Post)pandemic")
-  LL_all <- posterior$log_lik %>% apply(1, sum)
-  LL_all_summary <- c(mean(LL_all), quantile(LL_all, probs=c(0.025,0.975)))
-  
-  if(is.na(first_index_pandemic)){
-    return(LL_all_summary %>% t %>% as.data.frame %>% setNames(colnames) %>%
-             data.frame("data"=factor("All", levels=data_id),.))
-  }else{
-    LL_pre <- posterior$log_lik[,1:(first_index_pandemic-1)] %>% apply(1, sum)
-    LL_pre_summary <- c(mean(LL_pre), quantile(LL_pre, probs=c(0.025,0.975)))
-    
-    LL_post <- posterior$log_lik[,first_index_pandemic:ncol(posterior$log_lik)] %>% apply(1, sum)
-    LL_post_summary <- c(mean(LL_post), quantile(LL_post, probs=c(0.025,0.975)))
-    
-    LL_summary <- rbind(LL_all_summary, LL_pre_summary, LL_post_summary) %>%
-      as.data.frame(row.names=NA) %>%
-      setNames(colnames)
-    LL_summary$data <- factor(data_id, levels=data_id)
-    return(LL_summary[,c(4,1:3)])
-  }
-}
-
-Plot_LL <- function(p_sdlow, p_npi_sdlow, p_vi_sdlow, p_npi_vi_sdlow,
-                    p_sdhigh, p_npi_sdhigh, p_vi_sdhigh, p_npi_vi_sdhigh,
-                    
-                    p_sdlow_kick, p_npi_sdlow_kick, p_vi_sdlow_kick, p_npi_vi_sdlow_kick,
-                    p_sdhigh_kick, p_npi_sdhigh_kick, p_vi_sdhigh_kick, p_npi_vi_sdhigh_kick,
-                    
-                    p_sdlow_shift, p_npi_sdlow_shift, p_vi_sdlow_shift, p_npi_vi_sdlow_shift,
-                    p_sdhigh_shift, p_npi_sdhigh_shift, p_vi_sdhigh_shift, p_npi_vi_sdhigh_shift,
-                    
-                    colors=c("#800080", "#FFA500")){
-  
-  i <- ncol(p_sdlow$cases) + 1 # first_index_pandemic
-  
-  LL <- rbind(
-    
-    # Endemic attractor
-    data.frame(id="endemic", sd_obs="low", npi=0, vi="0", summary_LL(p_sdlow)),
-    data.frame(id="endemic", sd_obs="low", npi=1, vi="0", summary_LL(p_npi_sdlow, first_index_pandemic=i)),
-    data.frame(id="endemic", sd_obs="low", npi=0, vi="1", summary_LL(p_vi_sdlow)),
-    data.frame(id="endemic", sd_obs="low", npi=1, vi="1", summary_LL(p_npi_vi_sdlow, first_index_pandemic=i)),
-    
-    data.frame(id="endemic", sd_obs="high", npi=0, vi="0", summary_LL(p_sdhigh)),
-    data.frame(id="endemic", sd_obs="high", npi=1, vi="0", summary_LL(p_npi_sdhigh, first_index_pandemic=i)),
-    data.frame(id="endemic", sd_obs="high", npi=0, vi="1", summary_LL(p_vi_sdhigh)),
-    data.frame(id="endemic", sd_obs="high", npi=1, vi="1", summary_LL(p_npi_vi_sdhigh, first_index_pandemic=i)),
-    
-    # IAV perturbation
-    data.frame(id="kick", sd_obs="low", npi="0", vi="0", summary_LL(p_sdlow_kick)),
-    data.frame(id="kick", sd_obs="low", npi="1", vi="0", summary_LL(p_npi_sdlow_kick, first_index_pandemic=i)),
-    data.frame(id="kick", sd_obs="low", npi="0", vi="1", summary_LL(p_vi_sdlow_kick)),
-    data.frame(id="kick", sd_obs="low", npi="1", vi="1", summary_LL(p_npi_vi_sdlow_kick, first_index_pandemic=i)),
-    
-    data.frame(id="kick", sd_obs="high", npi="0", vi="0", summary_LL(p_sdhigh_kick)),
-    data.frame(id="kick", sd_obs="high", npi="1", vi="0", summary_LL(p_npi_sdhigh_kick, first_index_pandemic=i)),
-    data.frame(id="kick", sd_obs="high", npi="0", vi="1", summary_LL(p_vi_sdhigh_kick)),
-    data.frame(id="kick", sd_obs="high", npi="1", vi="1", summary_LL(p_npi_vi_sdhigh_kick, first_index_pandemic=i)),
-    
-    # NPI shift
-    data.frame(id="shift", sd_obs="low", npi="0", vi="0", summary_LL(p_sdlow_shift)),
-    data.frame(id="shift", sd_obs="low", npi="1", vi="0", summary_LL(p_npi_sdlow_shift, first_index_pandemic=i)),
-    data.frame(id="shift", sd_obs="low", npi="0", vi="1", summary_LL(p_vi_sdlow_shift)),
-    data.frame(id="shift", sd_obs="low", npi="1", vi="1", summary_LL(p_npi_vi_sdlow_shift, first_index_pandemic=i)),
-    
-    data.frame(id="shift", sd_obs="high", npi="0", vi="0", summary_LL(p_sdhigh_shift)),
-    data.frame(id="shift", sd_obs="high", npi="1", vi="0", summary_LL(p_npi_sdhigh_shift, first_index_pandemic=i)),
-    data.frame(id="shift", sd_obs="high", npi="0", vi="1", summary_LL(p_vi_sdhigh_shift)),
-    data.frame(id="shift", sd_obs="high", npi="1", vi="1", summary_LL(p_npi_vi_sdhigh_shift, first_index_pandemic=i))
+      geom_hline(yintercept=real_max_vi, linewidth=0.3, lty='dashed') +
+      labs(y="Max. change in force of infection\ndue to viral interaction") +
+      geom_violin(aes(y=phi), fill="#800080", trim=FALSE, col=NA, alpha=0.4) +
+      geom_boxplot(aes(y=phi),outliers=FALSE, linewidth=0.1, width=0.1) +
+      scale_y_continuous(labels=percent_format(), limits=c(-0.5,0.5), breaks=seq(-0.6,0.6,0.15)) +
+      theme_classic() +
+      theme(axis.title.x=element_blank(), axis.title.y=element_text(size=10))
   )
-  
-  LL$period <- NA
-  LL$period[LL$data=="All" & LL$npi=="0"] <- "Prepandemic"
-  LL$period[LL$data=="All" & LL$npi=="1"] <- "Whole~dataset"
-  LL$period[LL$data=="Prepandemic"] <- "Whole~dataset~(years~1-6)"
-  LL$period[LL$data=="(Post)pandemic"] <- "Whole~dataset~(years~7-10)"
-  
-  pd <- position_dodge(width=0.5)
-  
-  return(
-    LL %>%
-      # subset(sd_obs=="low") %>%
-      mutate(sd_obs=factor(sd_obs, levels=c("low","high"),
-                           labels=c("Low~obs.~noise~(sigma==0.08)", "High~obs.~noise~(sigma==0.4)")),
-             id=factor(id, levels=c("endemic", "shift", "kick"),
-                       labels=c("Endemic attractor", "6-month shift", "With IAV perturbation"))) %>%
-      ggplot(aes(x=id)) +
-      facet_grid(sd_obs~period, labeller=label_parsed, scales='free_y') +
-      labs(y="Log-likelihood\n") +
-      geom_segment(aes(y=CI95_lower, yend=CI95_upper, col=vi), position=pd) +
-      geom_point(aes(y=mean, fill=vi), pch=21, cex=1.5, position=pd) +
-      scale_color_manual(values=colors) +
-      scale_fill_manual(values=colors) +
-      theme_bw() +
-      theme(axis.title.x=element_blank(), axis.text.x=element_text(size=7, angle=30, hjust=1))
-    )
 }
 
 summary_cor <- function(posterior, data, first_index_pandemic=NA, log_scale=TRUE){
@@ -326,7 +180,7 @@ summary_cor <- function(posterior, data, first_index_pandemic=NA, log_scale=TRUE
   n <- ncol(posterior$cases)
   data <- data[1:n]
   colnames <- c("mean", "CI95_lower", "CI95_upper")
-  data_id <- c("All", "Prepandemic", "(Post)pandemic")
+  data_id <- c("All", "Pre-pandemic", "(Post-)pandemic")
   cor_all <- posterior$cases %>% apply(1, cor, y=data)
   cor_all_summary <- c(mean(cor_all), quantile(cor_all, probs=c(0.025,0.975)))
   
@@ -348,86 +202,39 @@ summary_cor <- function(posterior, data, first_index_pandemic=NA, log_scale=TRUE
   }
 }
 
-Plot_cor <- function(data, data_kick, data_shift,
-                     p_sdlow, p_npi_sdlow, p_vi_sdlow, p_npi_vi_sdlow,
-                     p_sdhigh, p_npi_sdhigh, p_vi_sdhigh, p_npi_vi_sdhigh,
-                     
-                     p_sdlow_kick, p_npi_sdlow_kick, p_vi_sdlow_kick, p_npi_vi_sdlow_kick,
-                     p_sdhigh_kick, p_npi_sdhigh_kick, p_vi_sdhigh_kick, p_npi_vi_sdhigh_kick,
-                     
-                     p_sdlow_shift, p_npi_sdlow_shift, p_vi_sdlow_shift, p_npi_vi_sdlow_shift,
-                     p_sdhigh_shift, p_npi_sdhigh_shift, p_vi_sdhigh_shift, p_npi_vi_sdhigh_shift,
-                     
-                     colors=c("#800080", "#FFA500"), log_scale=TRUE, simple=FALSE){
+Plot_cor <- function(data, p, p_npi, p_vi, p_npi_vi, colors=c("#FFA500", "#800080"), log_scale=TRUE){
   
-  i <- ncol(p_sdlow$cases) + 1 # first_index_pandemic
+  i <- ncol(p$cases) + 1 # first_index_pandemic
   col_labels <- c('0 (fixed)', 'estimated')
   
   tab_cor <- rbind(
-    
     # Endemic attractor
-    data.frame(id="endemic", sd_obs="low", npi="0", vi="0", summary_cor(p_sdlow, data$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="low", npi="1", vi="0", summary_cor(p_npi_sdlow, data$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="low", npi="0", vi="1", summary_cor(p_vi_sdlow, data$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="low", npi="1", vi="1", summary_cor(p_npi_vi_sdlow, data$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    
-    data.frame(id="endemic", sd_obs="high", npi="0", vi="0", summary_cor(p_sdhigh, data$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="high", npi="1", vi="0", summary_cor(p_npi_sdhigh, data$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="high", npi="0", vi="1", summary_cor(p_vi_sdhigh, data$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="endemic", sd_obs="high", npi="1", vi="1", summary_cor(p_npi_vi_sdhigh, data$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale)),
-    
-    # IAV perturbation
-    data.frame(id="kick", sd_obs="low", npi="0", vi="0", summary_cor(p_sdlow_kick, data_kick$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="low", npi="1", vi="0", summary_cor(p_npi_sdlow_kick, data_kick$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="low", npi="0", vi="1", summary_cor(p_vi_sdlow_kick, data_kick$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="low", npi="1", vi="1", summary_cor(p_npi_vi_sdlow_kick, data_kick$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    
-    data.frame(id="kick", sd_obs="high", npi="0", vi="0", summary_cor(p_sdhigh_kick, data_kick$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="high", npi="1", vi="0", summary_cor(p_npi_sdhigh_kick, data_kick$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="high", npi="0", vi="1", summary_cor(p_vi_sdhigh_kick, data_kick$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="kick", sd_obs="high", npi="1", vi="1", summary_cor(p_npi_vi_sdhigh_kick, data_kick$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale)),
-    
-    # NPI shift
-    data.frame(id="shift", sd_obs="low", npi="0", vi="0", summary_cor(p_sdlow_shift, data_shift$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="low", npi="1", vi="0", summary_cor(p_npi_sdlow_shift, data_shift$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="low", npi="0", vi="1", summary_cor(p_vi_sdlow_shift, data_shift$cases_noisy_sdlow, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="low", npi="1", vi="1", summary_cor(p_npi_vi_sdlow_shift, data_shift$cases_noisy_sdlow, first_index_pandemic=i, log_scale=log_scale)),
-    
-    data.frame(id="shift", sd_obs="high", npi="0", vi="0", summary_cor(p_sdhigh_shift, data_shift$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="high", npi="1", vi="0", summary_cor(p_npi_sdhigh_shift, data_shift$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="high", npi="0", vi="1", summary_cor(p_vi_sdhigh_shift, data_shift$cases_noisy_sdhigh, log_scale=log_scale)),
-    data.frame(id="shift", sd_obs="high", npi="1", vi="1", summary_cor(p_npi_vi_sdhigh_shift, data_shift$cases_noisy_sdhigh, first_index_pandemic=i, log_scale=log_scale))
+    data.frame(npi="0", vi="0", summary_cor(p, data$cases_noisy, log_scale=log_scale)),
+    data.frame(npi="1", vi="0", summary_cor(p_npi, data$cases_noisy, first_index_pandemic=i, log_scale=log_scale)),
+    data.frame(npi="0", vi="1", summary_cor(p_vi, data$cases_noisy, log_scale=log_scale)),
+    data.frame(npi="1", vi="1", summary_cor(p_npi_vi, data$cases_noisy, first_index_pandemic=i, log_scale=log_scale))
   )
   
   tab_cor$period <- NA
-  tab_cor$period[tab_cor$data=="All" & tab_cor$npi=="0"] <- "Prepandemic"
-  tab_cor$period[tab_cor$data=="All" & tab_cor$npi=="1"] <- "Whole~dataset"
+  tab_cor$period[tab_cor$data=="All" & tab_cor$npi=="0"] <- "Pre-pandemic"
+  tab_cor$period[tab_cor$data=="All" & tab_cor$npi=="1"] <- "Whole dataset\n(years 1-10)"
+  tab_cor$period[tab_cor$data=="Pre-pandemic"] <- "Whole dataset\n(years 1-6)"
+  tab_cor$period[tab_cor$data=="(Post-)pandemic"] <- "Whole dataset\n(years 7-10)"
   
-  if(simple){
-    tab_cor <- tab_cor[-which(is.na(tab_cor$period)),]
-  }else{
-    tab_cor$period[tab_cor$data=="Prepandemic"] <- "Whole~dataset~(years~1-6)"
-    tab_cor$period[tab_cor$data=="(Post)pandemic"] <- "Whole~dataset~(years~7-10)"
-  }
-  
+  tab_cor$period <- factor(tab_cor$period, levels=c("Whole dataset\n(years 7-10)", "Whole dataset\n(years 1-6)",
+                                                    "Whole dataset\n(years 1-10)", "Pre-pandemic"))
   pd <- position_dodge(width=0.5)
   
   return(
     tab_cor %>%
-      # subset(sd_obs=="low") %>%
-      mutate(sd_obs=factor(sd_obs, levels=c("low","high"),
-                           labels=c("Low~obs.~noise~(sigma==0.08)", "High~obs.~noise~(sigma==0.4)")),
-             id=factor(id, levels=c("endemic", "shift", "kick"),
-                       labels=c("A) Original simulation", "B) NPI shift", "C) IAV kick"))) %>%
-      ggplot(aes(x=id)) +
-      facet_grid(sd_obs~period, labeller=label_parsed, scales='free_y') +
-      labs(y="Pearson correlation", col=expression(phi), fill=expression(phi)) +
-      geom_segment(aes(y=CI95_lower, yend=CI95_upper, col=vi), position=pd) +
-      geom_point(aes(y=mean, fill=vi), pch=21, cex=2, position=pd) +
+      ggplot(aes(y=period)) +
+      labs(x="Pearson correlation (log scale)", col=expression(phi), fill=expression(phi)) +
+      geom_segment(aes(x=CI95_lower, xend=CI95_upper, col=vi), position=pd) +
+      geom_point(aes(x=mean, fill=vi), pch=21, cex=1.75, position=pd) +
       scale_color_manual(values=colors, labels=col_labels) +
       scale_fill_manual(values=colors, labels=col_labels) +
       theme_bw() +
-      theme(axis.title.x=element_blank(), axis.text.x=element_text(size=9, angle=40, hjust=1),
+      theme(axis.title.y=element_blank(), axis.text.x=element_text(size=9),
             legend.text=element_text(size=11), legend.title=element_text(size=17))
   )
 }
@@ -443,42 +250,35 @@ summary_fitted_values <- function(obs_cases, posterior_cases, shift=0){
     )
 }
 
-Plot_fit <- function(obs,
-                     p_sdlow, p_npi_sdlow, p_vi_sdlow, p_npi_vi_sdlow,
-                     p_sdhigh, p_npi_sdhigh, p_vi_sdhigh, p_npi_vi_sdhigh,
-                     shift=0, colors=c("#800080", "#FFA500")){ 
+Plot_fit <- function(data, p, p_npi, p_vi, p_npi_vi, shift=0, colors=c("#FFA500", "#800080")){ 
   
   col_labels <- c('0 (fixed)', 'estimated')
   
+  npi <- data.frame(npi="1", tmin=min(data$time[data$c!=0]/52+shift),
+                    tmax=max(data$time[data$c!=0]/52+shift))
+  
   return(
     rbind(
-      data.frame(sd_obs="low", npi="0", vi="0", summary_fitted_values(obs$cases_noisy_sdlow, p_sdlow$cases, shift=shift)),
-      data.frame(sd_obs="low", npi="1", vi="0", summary_fitted_values(obs$cases_noisy_sdlow, p_npi_sdlow$cases, shift=shift)),
-      data.frame(sd_obs="low", npi="0", vi="1", summary_fitted_values(obs$cases_noisy_sdlow, p_vi_sdlow$cases, shift=shift)),
-      data.frame(sd_obs="low", npi="1", vi="1", summary_fitted_values(obs$cases_noisy_sdlow, p_npi_vi_sdlow$cases, shift=shift)),
+      data.frame(npi="0", vi="0", summary_fitted_values(data$cases_noisy, p$cases, shift=shift)),
+      data.frame(npi="1", vi="0", summary_fitted_values(data$cases_noisy, p_npi$cases, shift=shift)),
+      data.frame(npi="0", vi="1", summary_fitted_values(data$cases_noisy, p_vi$cases, shift=shift)),
+      data.frame(npi="1", vi="1", summary_fitted_values(data$cases_noisy, p_npi_vi$cases, shift=shift))) %>%
       
-      data.frame(sd_obs="high", npi="0", vi="0", summary_fitted_values(obs$cases_noisy_sdhigh, p_sdhigh$cases, shift=shift)),
-      data.frame(sd_obs="high", npi="1", vi="0", summary_fitted_values(obs$cases_noisy_sdhigh, p_npi_sdhigh$cases, shift=shift)),
-      data.frame(sd_obs="high", npi="0", vi="1", summary_fitted_values(obs$cases_noisy_sdhigh, p_vi_sdhigh$cases, shift=shift)),
-      data.frame(sd_obs="high", npi="1", vi="1", summary_fitted_values(obs$cases_noisy_sdhigh, p_npi_vi_sdhigh$cases, shift=shift))
-      ) %>%
-      mutate(npi=factor(npi, levels=c("0","1"), labels=c("Prepandemic", "Whole~dataset")),
-             sd_obs=factor(sd_obs, levels=c("low","high"),
-                           labels=c("sigma==0.08", "sigma==0.4"))) %>%
-      ggplot(aes(x=time)) +
-      facet_grid(sd_obs~npi, labeller=label_parsed, scales='free') +
-      labs(x="Time (years)", y="RV detections (log scale)", col=expression(phi), fill=expression(phi)) +
-      geom_vline(xintercept=ncol(p_sdlow$cases)/52+shift, linewidth=0.4) +
-      geom_point(aes(y=log(obs)), cex=0.4, stroke=0.01, pch=21) +
-      # geom_point(aes(y=log(obs)), cex=0.1) +
-      geom_ribbon(aes(ymin=log(lower), ymax=log(upper), fill=vi), alpha=0.25) +
-      geom_line(aes(y=log(median), col=vi), linewidth=0.2) +
+      ggplot() +
+      facet_grid(~npi, scales='free', labeller=labeller(npi=c("0"="Pre-pandemic data",
+                                                              "1"="Including (post-)pandemic data"))) +
+      labs(x="Time (years)", y="RV detections", col=expression(phi), fill=expression(phi)) +
+      geom_vline(xintercept=ncol(p$cases)/52+shift, linewidth=0.4) +
+      geom_rect(data=npi, aes(xmin=tmin, xmax=tmax, ymin=-Inf, ymax=+Inf), fill='grey85') +
+      geom_point(aes(x=time, y=obs), cex=0.4, stroke=0.01, pch=21) +
+      geom_ribbon(aes(x=time, ymin=lower, ymax=upper, fill=vi), alpha=0.25) +
+      geom_line(aes(x=time, y=median, col=vi), linewidth=0.2) +
       scale_x_continuous(expand=c(0.001,0), breaks=0:9) +
-      scale_y_continuous(expand=c(0,0), breaks=1:10) +
+      #scale_y_continuous(expand=c(0,0), breaks=1:10) +
       scale_color_manual(values=colors, labels=col_labels) +
       scale_fill_manual(values=colors, labels=col_labels) +
       theme_test() +
-      theme(axis.title.x=element_text(size=9),
-            axis.title.y=element_text(size=9), axis.text.y=element_text(size=8))
+      theme(axis.title.x=element_text(size=10),
+            axis.title.y=element_text(size=11), axis.text.y=element_text(size=8))
   )
 }

@@ -4,239 +4,136 @@ library(tidyverse)
 library(plyr)
 library(rstan)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Fit")
-
-######################### Fit for simulated dataset #0 #########################
-
-## Original simulation
-
-fit0_sdlow <- readRDS("Output/fit_RV_SIRS_simul0_sdlow.RDS")
-fit0_npi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_simul0_sdlow.RDS")
-fit0_vi_sdlow <- readRDS("Output/fit_RV_SIRS_vi_simul0_sdlow.RDS")
-fit0_npi_vi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_sdlow.RDS")
-
-p0_sdlow <- fit0_sdlow %>% extract
-p0_npi_sdlow <- fit0_npi_sdlow %>% extract
-p0_vi_sdlow <- fit0_vi_sdlow %>% extract
-p0_npi_vi_sdlow <- fit0_npi_vi_sdlow %>% extract
-
-fit0_sdhigh <- readRDS("Output/fit_RV_SIRS_simul0_sdhigh.RDS")
-fit0_npi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_simul0_sdhigh.RDS")
-fit0_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_vi_simul0_sdhigh.RDS")
-fit0_npi_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_sdhigh.RDS")
-
-p0_sdhigh <- fit0_sdhigh %>% extract
-p0_npi_sdhigh <- fit0_npi_sdhigh %>% extract
-p0_vi_sdhigh <- fit0_vi_sdhigh %>% extract
-p0_npi_vi_sdhigh <- fit0_npi_vi_sdhigh %>% extract
-
-## Kick
-
-fit0_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_vi_simul0_kick_sdlow.RDS")
-fit0_npi_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_kick_sdlow.RDS")
-
-p0_sdlow_kick <- p0_sdlow
-p0_npi_sdlow_kick <- p0_npi_sdlow
-p0_vi_sdlow_kick <- fit0_vi_sdlow_kick %>% extract
-p0_npi_vi_sdlow_kick <- fit0_npi_vi_sdlow_kick %>% extract
-
-fit0_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_vi_simul0_kick_sdhigh.RDS")
-fit0_npi_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_kick_sdhigh.RDS")
-
-p0_sdhigh_kick <- p0_sdhigh
-p0_npi_sdhigh_kick <- p0_npi_sdhigh
-p0_vi_sdhigh_kick <- fit0_vi_sdhigh_kick %>% extract
-p0_npi_vi_sdhigh_kick <- fit0_npi_vi_sdhigh_kick %>% extract
-
-## Shift
-
-fit0_sdlow_shift <- readRDS("Output/fit_RV_SIRS_simul0_shift_sdlow.RDS")
-fit0_npi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_simul0_shift_sdlow.RDS")
-fit0_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_vi_simul0_shift_sdlow.RDS")
-fit0_npi_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_shift_sdlow.RDS")
-
-p0_sdlow_shift <- fit0_sdlow_shift %>% extract
-p0_npi_sdlow_shift <- fit0_npi_sdlow_shift %>% extract
-p0_vi_sdlow_shift <- fit0_vi_sdlow_shift %>% extract
-p0_npi_vi_sdlow_shift <- fit0_npi_vi_sdlow_shift %>% extract
-
-fit0_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_simul0_shift_sdhigh.RDS")
-fit0_npi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_simul0_shift_sdhigh.RDS")
-fit0_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_vi_simul0_shift_sdhigh.RDS")
-fit0_npi_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul0_shift_sdhigh.RDS")
-
-p0_sdhigh_shift <- fit0_sdhigh_shift %>% extract
-p0_npi_sdhigh_shift <- fit0_npi_sdhigh_shift %>% extract
-p0_vi_sdhigh_shift <- fit0_vi_sdhigh_shift %>% extract
-p0_npi_vi_sdhigh_shift <- fit0_npi_vi_sdhigh_shift %>% extract
-
-save(
-  p0_sdlow, p0_npi_sdlow, p0_vi_sdlow, p0_npi_vi_sdlow,
-  p0_sdlow_kick, p0_npi_sdlow_kick, p0_vi_sdlow_kick, p0_npi_vi_sdlow_kick,
-  p0_sdlow_shift, p0_npi_sdlow_shift, p0_vi_sdlow_shift, p0_npi_vi_sdlow_shift,
-  file="Simul3/Posterior_simul0_sdlow.RData")
-
-save(p0_sdhigh, p0_npi_sdhigh, p0_vi_sdhigh, p0_npi_vi_sdhigh,
-     p0_sdhigh_kick, p0_npi_sdhigh_kick, p0_vi_sdhigh_kick, p0_npi_vi_sdhigh_kick,
-     p0_sdhigh_shift, p0_npi_sdhigh_shift, p0_vi_sdhigh_shift, p0_npi_vi_sdhigh_shift,
-     file="Simul3/Posterior_simul0_sdhigh.RData")
+setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Fit/Simulation_study2")
 
 ######################### Fit for simulated dataset #1 #########################
 
 ## Original simulation
 
-fit1_sdlow <- readRDS("Output/fit_RV_SIRS_simul1_sdlow.RDS")
-fit1_npi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_simul1_sdlow.RDS")
-fit1_vi_sdlow <- readRDS("Output/fit_RV_SIRS_vi_simul1_sdlow.RDS")
-fit1_npi_vi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_sdlow.RDS")
+fit1 <- readRDS("Output/fit_RV_SIRS_simul1.RDS")
+fit1_npi <- readRDS("Output/fit_RV_SIRS_npi_simul1.RDS")
+fit1_vi <- readRDS("Output/fit_RV_SIRS_vi_simul1.RDS")
+fit1_npi_vi <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1.RDS")
 
-p1_sdlow <- fit1_sdlow %>% extract
-p1_npi_sdlow <- fit1_npi_sdlow %>% extract
-p1_vi_sdlow <- fit1_vi_sdlow %>% extract
-p1_npi_vi_sdlow <- fit1_npi_vi_sdlow %>% extract
-
-fit1_sdhigh <- readRDS("Output/fit_RV_SIRS_simul1_sdhigh.RDS")
-fit1_npi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_simul1_sdhigh.RDS")
-fit1_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_vi_simul1_sdhigh.RDS")
-fit1_npi_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_sdhigh.RDS")
-
-p1_sdhigh <- fit1_sdhigh %>% extract
-p1_npi_sdhigh <- fit1_npi_sdhigh %>% extract
-p1_vi_sdhigh <- fit1_vi_sdhigh %>% extract
-p1_npi_vi_sdhigh <- fit1_npi_vi_sdhigh %>% extract
+p1 <- fit1 %>% extract
+p1_npi <- fit1_npi %>% extract
+p1_vi <- fit1_vi %>% extract
+p1_npi_vi <- fit1_npi_vi %>% extract
 
 ## Kick
 
-fit1_sdlow_kick <- readRDS("Output/fit_RV_SIRS_simul1_kick_sdlow.RDS")
-fit1_npi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_npi_simul1_kick_sdlow.RDS")
-fit1_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_vi_simul1_kick_sdlow.RDS")
-fit1_npi_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_kick_sdlow.RDS")
+fit1_kick <- readRDS("Output/fit_RV_SIRS_simul1_kick.RDS")
+fit1_npi_kick <- readRDS("Output/fit_RV_SIRS_npi_simul1_kick.RDS")
+fit1_vi_kick <- readRDS("Output/fit_RV_SIRS_vi_simul1_kick.RDS")
+fit1_npi_vi_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_kick.RDS")
 
-p1_sdlow_kick <- fit1_sdlow_kick %>% extract
-p1_npi_sdlow_kick <- fit1_npi_sdlow_kick %>% extract
-p1_vi_sdlow_kick <- fit1_vi_sdlow_kick %>% extract
-p1_npi_vi_sdlow_kick <- fit1_npi_vi_sdlow_kick %>% extract
-
-fit1_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_simul1_kick_sdhigh.RDS")
-fit1_npi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_npi_simul1_kick_sdhigh.RDS")
-fit1_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_vi_simul1_kick_sdhigh.RDS")
-fit1_npi_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_kick_sdhigh.RDS")
-
-p1_sdhigh_kick <- fit1_sdhigh_kick %>% extract
-p1_npi_sdhigh_kick <- fit1_npi_sdhigh_kick %>% extract
-p1_vi_sdhigh_kick <- fit1_vi_sdhigh_kick %>% extract
-p1_npi_vi_sdhigh_kick <- fit1_npi_vi_sdhigh_kick %>% extract
+p1_kick <- fit1_kick %>% extract
+p1_npi_kick <- fit1_npi_kick %>% extract
+p1_vi_kick <- fit1_vi_kick %>% extract
+p1_npi_vi_kick <- fit1_npi_vi_kick %>% extract
 
 ## Shift
 
-fit1_sdlow_shift <- readRDS("Output/fit_RV_SIRS_simul1_shift_sdlow.RDS")
-fit1_npi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_simul1_shift_sdlow.RDS")
-fit1_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_vi_simul1_shift_sdlow.RDS")
-fit1_npi_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_shift_sdlow.RDS")
+fit1_shift <- readRDS("Output/fit_RV_SIRS_simul1_shift.RDS")
+fit1_npi_shift <- readRDS("Output/fit_RV_SIRS_npi_simul1_shift.RDS")
+fit1_vi_shift <- readRDS("Output/fit_RV_SIRS_vi_simul1_shift.RDS")
+fit1_npi_vi_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_shift.RDS")
 
-p1_sdlow_shift <- fit1_sdlow_shift %>% extract
-p1_npi_sdlow_shift <- fit1_npi_sdlow_shift %>% extract
-p1_vi_sdlow_shift <- fit1_vi_sdlow_shift %>% extract
-p1_npi_vi_sdlow_shift <- fit1_npi_vi_sdlow_shift %>% extract
-
-fit1_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_simul1_shift_sdhigh.RDS")
-fit1_npi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_simul1_shift_sdhigh.RDS")
-fit1_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_vi_simul1_shift_sdhigh.RDS")
-fit1_npi_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_shift_sdhigh.RDS")
-
-p1_sdhigh_shift <- fit1_sdhigh_shift %>% extract
-p1_npi_sdhigh_shift <- fit1_npi_sdhigh_shift %>% extract
-p1_vi_sdhigh_shift <- fit1_vi_sdhigh_shift %>% extract
-p1_npi_vi_sdhigh_shift <- fit1_npi_vi_sdhigh_shift %>% extract
+p1_shift <- fit1_shift %>% extract
+p1_npi_shift <- fit1_npi_shift %>% extract
+p1_vi_shift <- fit1_vi_shift %>% extract
+p1_npi_vi_shift <- fit1_npi_vi_shift %>% extract
 
 save(
-  p1_sdlow, p1_npi_sdlow, p1_vi_sdlow, p1_npi_vi_sdlow,
-  p1_sdlow_kick, p1_npi_sdlow_kick, p1_vi_sdlow_kick, p1_npi_vi_sdlow_kick,
-  p1_sdlow_shift, p1_npi_sdlow_shift, p1_vi_sdlow_shift, p1_npi_vi_sdlow_shift,
-  file="Simul3/Posterior_simul1_sdlow.RData")
+  p1, p1_npi, p1_vi, p1_npi_vi,
+  p1_kick, p1_npi_kick, p1_vi_kick, p1_npi_vi_kick,
+  p1_shift, p1_npi_shift, p1_vi_shift, p1_npi_vi_shift,
+  file="Posterior_simul1.RData")
 
-save(
-  p1_sdhigh, p1_npi_sdhigh, p1_vi_sdhigh, p1_npi_vi_sdhigh,
-  p1_sdhigh_kick, p1_npi_sdhigh_kick, p1_vi_sdhigh_kick, p1_npi_vi_sdhigh_kick,
-  p1_sdhigh_shift, p1_npi_sdhigh_shift, p1_vi_sdhigh_shift, p1_npi_vi_sdhigh_shift,
-  file="Simul3/Posterior_simul1_sdhigh.RData")
-
-######################### Fit for simulated dataset #1 v2 #########################
+######################### Fit for simulated dataset #2 #########################
 
 ## Original simulation
 
-fit1_v2_sdlow <- readRDS("Output/fit_RV_SIRS_simul1_v2_sdlow.RDS")
-fit1_v2_npi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_sdlow.RDS")
-fit1_v2_vi_sdlow <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_sdlow.RDS")
-fit1_v2_npi_vi_sdlow <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_sdlow.RDS")
+fit2 <- readRDS("Output/fit_RV_SIRS_simul2.RDS")
+fit2_npi <- readRDS("Output/fit_RV_SIRS_npi_simul2.RDS")
+fit2_vi <- readRDS("Output/fit_RV_SIRS_vi_simul2.RDS")
+fit2_npi_vi <- readRDS("Output/fit_RV_SIRS_npi_vi_simul2.RDS")
 
-p1_v2_sdlow <- fit1_v2_sdlow %>% extract
-p1_v2_npi_sdlow <- fit1_v2_npi_sdlow %>% extract
-p1_v2_vi_sdlow <- fit1_v2_vi_sdlow %>% extract
-p1_v2_npi_vi_sdlow <- fit1_v2_npi_vi_sdlow %>% extract
-
-fit1_v2_sdhigh <- readRDS("Output/fit_RV_SIRS_simul1_v2_sdhigh.RDS")
-fit1_v2_npi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_sdhigh.RDS")
-fit1_v2_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_sdhigh.RDS")
-fit1_v2_npi_vi_sdhigh <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_sdhigh.RDS")
-
-p1_v2_sdhigh <- fit1_v2_sdhigh %>% extract
-p1_v2_npi_sdhigh <- fit1_v2_npi_sdhigh %>% extract
-p1_v2_vi_sdhigh <- fit1_v2_vi_sdhigh %>% extract
-p1_v2_npi_vi_sdhigh <- fit1_v2_npi_vi_sdhigh %>% extract
+p2 <- fit2 %>% extract
+p2_npi <- fit2_npi %>% extract
+p2_vi <- fit2_vi %>% extract
+p2_npi_vi <- fit2_npi_vi %>% extract
 
 ## Kick
 
-fit1_v2_sdlow_kick <- readRDS("Output/fit_RV_SIRS_simul1_v2_kick_sdlow.RDS")
-fit1_v2_npi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_kick_sdlow.RDS")
-fit1_v2_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_kick_sdlow.RDS")
-fit1_v2_npi_vi_sdlow_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_kick_sdlow.RDS")
+fit2_kick <- readRDS("Output/fit_RV_SIRS_simul2_kick.RDS")
+fit2_npi_kick <- readRDS("Output/fit_RV_SIRS_npi_simul2_kick.RDS")
+fit2_vi_kick <- readRDS("Output/fit_RV_SIRS_vi_simul2_kick.RDS")
+fit2_npi_vi_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul2_kick.RDS")
 
-p1_v2_sdlow_kick <- fit1_v2_sdlow_kick %>% extract
-p1_v2_npi_sdlow_kick <- fit1_v2_npi_sdlow_kick %>% extract
-p1_v2_vi_sdlow_kick <- fit1_v2_vi_sdlow_kick %>% extract
-p1_v2_npi_vi_sdlow_kick <- fit1_v2_npi_vi_sdlow_kick %>% extract
-
-fit1_v2_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_simul1_v2_kick_sdhigh.RDS")
-fit1_v2_npi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_kick_sdhigh.RDS")
-fit1_v2_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_kick_sdhigh.RDS")
-fit1_v2_npi_vi_sdhigh_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_kick_sdhigh.RDS")
-
-p1_v2_sdhigh_kick <- fit1_v2_sdhigh_kick %>% extract
-p1_v2_npi_sdhigh_kick <- fit1_v2_npi_sdhigh_kick %>% extract
-p1_v2_vi_sdhigh_kick <- fit1_v2_vi_sdhigh_kick %>% extract
-p1_v2_npi_vi_sdhigh_kick <- fit1_v2_npi_vi_sdhigh_kick %>% extract
+p2_kick <- fit2_kick %>% extract
+p2_npi_kick <- fit2_npi_kick %>% extract
+p2_vi_kick <- fit2_vi_kick %>% extract
+p2_npi_vi_kick <- fit2_npi_vi_kick %>% extract
 
 ## Shift
 
-fit1_v2_sdlow_shift <- readRDS("Output/fit_RV_SIRS_simul1_v2_shift_sdlow.RDS")
-fit1_v2_npi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_shift_sdlow.RDS")
-fit1_v2_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_shift_sdlow.RDS")
-fit1_v2_npi_vi_sdlow_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_shift_sdlow.RDS")
+fit2_shift <- readRDS("Output/fit_RV_SIRS_simul2_shift.RDS")
+fit2_npi_shift <- readRDS("Output/fit_RV_SIRS_npi_simul2_shift.RDS")
+fit2_vi_shift <- readRDS("Output/fit_RV_SIRS_vi_simul2_shift.RDS")
+fit2_npi_vi_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul2_shift.RDS")
 
-p1_v2_sdlow_shift <- fit1_v2_sdlow_shift %>% extract
-p1_v2_npi_sdlow_shift <- fit1_v2_npi_sdlow_shift %>% extract
-p1_v2_vi_sdlow_shift <- fit1_v2_vi_sdlow_shift %>% extract
-p1_v2_npi_vi_sdlow_shift <- fit1_v2_npi_vi_sdlow_shift %>% extract
-
-fit1_v2_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_simul1_v2_shift_sdhigh.RDS")
-fit1_v2_npi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_simul1_v2_shift_sdhigh.RDS")
-fit1_v2_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_vi_simul1_v2_shift_sdhigh.RDS")
-fit1_v2_npi_vi_sdhigh_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul1_v2_shift_sdhigh.RDS")
-
-p1_v2_sdhigh_shift <- fit1_v2_sdhigh_shift %>% extract
-p1_v2_npi_sdhigh_shift <- fit1_v2_npi_sdhigh_shift %>% extract
-p1_v2_vi_sdhigh_shift <- fit1_v2_vi_sdhigh_shift %>% extract
-p1_v2_npi_vi_sdhigh_shift <- fit1_v2_npi_vi_sdhigh_shift %>% extract
+p2_shift <- fit2_shift %>% extract
+p2_npi_shift <- fit2_npi_shift %>% extract
+p2_vi_shift <- fit2_vi_shift %>% extract
+p2_npi_vi_shift <- fit2_npi_vi_shift %>% extract
 
 save(
-  p1_v2_sdlow, p1_v2_npi_sdlow, p1_v2_vi_sdlow, p1_v2_npi_vi_sdlow,
-  p1_v2_sdlow_kick, p1_v2_npi_sdlow_kick, p1_v2_vi_sdlow_kick, p1_v2_npi_vi_sdlow_kick,
-  p1_v2_sdlow_shift, p1_v2_npi_sdlow_shift, p1_v2_vi_sdlow_shift, p1_v2_npi_vi_sdlow_shift,
-  file="Posterior_simul1_v2_sdlow.RData")
+  p2, p2_npi, p2_vi, p2_npi_vi,
+  p2_kick, p2_npi_kick, p2_vi_kick, p2_npi_vi_kick,
+  p2_shift, p2_npi_shift, p2_vi_shift, p2_npi_vi_shift,
+  file="Posterior_simul2.RData")
+
+######################### Fit for simulated dataset #3 #########################
+
+## Original simulation
+
+fit3 <- readRDS("Output/fit_RV_SIRS_simul3.RDS")
+fit3_npi <- readRDS("Output/fit_RV_SIRS_npi_simul3.RDS")
+fit3_vi <- readRDS("Output/fit_RV_SIRS_vi_simul3.RDS")
+fit3_npi_vi <- readRDS("Output/fit_RV_SIRS_npi_vi_simul3.RDS")
+
+p3 <- fit3 %>% extract
+p3_npi <- fit3_npi %>% extract
+p3_vi <- fit3_vi %>% extract
+p3_npi_vi <- fit3_npi_vi %>% extract
+
+## Kick
+
+fit3_kick <- readRDS("Output/fit_RV_SIRS_simul3_kick.RDS")
+fit3_npi_kick <- readRDS("Output/fit_RV_SIRS_npi_simul3_kick.RDS")
+fit3_vi_kick <- readRDS("Output/fit_RV_SIRS_vi_simul3_kick.RDS")
+fit3_npi_vi_kick <- readRDS("Output/fit_RV_SIRS_npi_vi_simul3_kick.RDS")
+
+p3_kick <- fit3_kick %>% extract
+p3_npi_kick <- fit3_npi_kick %>% extract
+p3_vi_kick <- fit3_vi_kick %>% extract
+p3_npi_vi_kick <- fit3_npi_vi_kick %>% extract
+
+## Shift
+
+fit3_shift <- readRDS("Output/fit_RV_SIRS_simul3_shift.RDS")
+fit3_npi_shift <- readRDS("Output/fit_RV_SIRS_npi_simul3_shift.RDS")
+fit3_vi_shift <- readRDS("Output/fit_RV_SIRS_vi_simul3_shift.RDS")
+fit3_npi_vi_shift <- readRDS("Output/fit_RV_SIRS_npi_vi_simul3_shift.RDS")
+
+p3_shift <- fit3_shift %>% extract
+p3_npi_shift <- fit3_npi_shift %>% extract
+p3_vi_shift <- fit3_vi_shift %>% extract
+p3_npi_vi_shift <- fit3_npi_vi_shift %>% extract
 
 save(
-  p1_v2_sdhigh, p1_v2_npi_sdhigh, p1_v2_vi_sdhigh, p1_v2_npi_vi_sdhigh,
-  p1_v2_sdhigh_kick, p1_v2_npi_sdhigh_kick, p1_v2_vi_sdhigh_kick, p1_v2_npi_vi_sdhigh_kick,
-  p1_v2_sdhigh_shift, p1_v2_npi_sdhigh_shift, p1_v2_vi_sdhigh_shift, p1_v2_npi_vi_sdhigh_shift,
-  file="Posterior_simul1_v2_sdhigh.RData")
+  p3, p3_npi, p3_vi, p3_npi_vi,
+  p3_kick, p3_npi_kick, p3_vi_kick, p3_npi_vi_kick,
+  p3_shift, p3_npi_shift, p3_vi_shift, p3_npi_vi_shift,
+  file="Posterior_simul3.RData")
