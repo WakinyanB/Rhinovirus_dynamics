@@ -512,3 +512,4 @@ plot_grid(
           plot.margin=unit(c(0.2,0.2,2.65,0.3), "cm")),
   
   ncol=2, rel_widths=c(0.6,0.4), labels=LETTERS[1:2]) # 8 x 6
+
