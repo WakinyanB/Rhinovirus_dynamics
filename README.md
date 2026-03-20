@@ -39,4 +39,5 @@ Plot time series data and cross-wavelet analyses (`Plot_US_CA_Data_and_cross_wav
     vi=viral interaction (estimates IAV effect on RV)
     - `Estim_NPI/` (estimates weekly effects of non-pharmaceutical interventions, without using mobility data)
     - `SEIRS/` (adds an exposed stage E in the compartmental model)
+    - `LOO/` (exact Leave-one-out cross-validation)
     
