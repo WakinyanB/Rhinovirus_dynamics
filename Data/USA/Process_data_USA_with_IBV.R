@@ -55,38 +55,40 @@ RV <- rbind(
 
 RV$location <- RV$location %>% factor(levels=locations)
 
-# IAV
+# IAV + IBV
 
-col_names <- c("REGION", "YEAR", "WEEK", "TOTAL.SPECIMENS", "TOTAL.A")
+colnames <- c("REGION", "YEAR", "WEEK", "TOTAL.SPECIMENS", "TOTAL.A")
+colnames_new <- c("location", "year", "week", "test", "positive_A", "positive_B")
 
-IAV <- rbind(
-  read.csv("USA/FluView/ICL_NREVSS_Combined_prior_to_2015_16.csv", header=TRUE)[,col_names],
-  read.csv("USA/FluView/ICL_NREVSS_Combined_prior_to_2015_16_National.csv", header=TRUE)[,col_names],
-  read.csv("USA/FluView/ICL_NREVSS_Clinical_Labs.csv", header=TRUE)[,col_names],
-  read.csv("USA/FluView/ICL_NREVSS_Clinical_Labs_National.csv", header=TRUE)[,col_names]
+IV <- rbind(
+  read.csv("USA/FluView/ICL_NREVSS_Combined_prior_to_2015_16.csv", header=TRUE)[, c(colnames,"B")] %>%
+    setNames(colnames_new),
+  read.csv("USA/FluView/ICL_NREVSS_Combined_prior_to_2015_16_National.csv", header=TRUE)[, c(colnames,"B")] %>%
+    setNames(colnames_new),
+  read.csv("USA/FluView/ICL_NREVSS_Clinical_Labs.csv", header=TRUE)[, c(colnames, "TOTAL.B")] %>%
+    setNames(colnames_new),
+  read.csv("USA/FluView/ICL_NREVSS_Clinical_Labs_National.csv", header=TRUE)[, c(colnames, "TOTAL.B")] %>%
+    setNames(colnames_new)
 ) %>%
-  mutate(date=ISOweek2date(sprintf("%d-W%02d-6", YEAR, WEEK))) # 6=Saturday
+  mutate(date=ISOweek2date(sprintf("%d-W%02d-6", year, week))) # 6=Saturday
 
-colnames(IAV) <- c("location", "year", "week", "test", "positive", "date")
-
-IAV$location <- IAV$location %>% gsub("Region", "HHS",.)
-IAV$location <- IAV$location %>% gsub("X", "National",.)
-IAV$location <- factor(IAV$location, levels=locations)
+IV$location <- IV$location %>% gsub("Region", "HHS",.)
+IV$location <- IV$location %>% gsub("X", "National",.)
+IV$location <- factor(IV$location, levels=locations)
 
 # Final dataset
 
 colnames(RV) <- c("date", "location", "RV_test", "RV_positive")
-colnames(IAV) <- c("location", "year", "week", "IV_test", "IAV_positive", "date")
+colnames(IV) <- c("location", "year", "week", "IV_test", "IAV_positive", "IBV_positive", "date")
 
-data <- IAV[,c("location", "date", "week", "IV_test", "IAV_positive")] %>% merge(RV)
+data <- IV[,c("location", "date", "week", "IV_test", "IAV_positive", "IBV_positive")] %>% merge(RV)
 
 data$RV_test_rolling_avg <- NA
 data$IV_test_rolling_avg <- NA
 data$RV_testing_factor <- NA
 data$IV_testing_factor <- NA
 
-mean_test <- data %>%
-  ddply(~location, function(X){return(c("RV"=mean(X$RV_test), "IAV"=mean(X$IV_test)))})
+mean_test <- data %>% ddply(~location, function(X){return(c("RV"=mean(X$RV_test), "IV"=mean(X$IV_test)))})
 
 for(i in 1:nrow(data)){
   
@@ -98,11 +100,12 @@ for(i in 1:nrow(data)){
   data$IV_test_rolling_avg[i] <- mean(X$IV_test)
   
   data$RV_testing_factor[i] <- mean_test$RV[match(unique(X$location), mean_test$location)]/data$RV_test_rolling_avg[i]
-  data$IV_testing_factor[i] <- mean_test$IAV[match(unique(X$location), mean_test$location)]/data$IV_test_rolling_avg[i]
+  data$IV_testing_factor[i] <- mean_test$IV[match(unique(X$location), mean_test$location)]/data$IV_test_rolling_avg[i]
 }
 
 data$RV_scaled_cases <- data$RV_positive*data$RV_testing_factor
 data$IAV_scaled_cases <- data$IAV_positive*data$IV_testing_factor
+data$IBV_scaled_cases <- data$IBV_positive*data$IV_testing_factor
 
 data %>%
   ggplot(aes(x=date, y=RV_positive)) +
@@ -130,30 +133,17 @@ data %>%
   theme_bw() +
   theme(axis.title.x=element_blank(), axis.text.x=element_text(size=9))
 
-data <- data[order(data$date),]
-
-sum_IAV_cases_lag <- function(data, lag=0){
-  return(
-    (1:nrow(data)) %>% sapply(function(i){
-      return(sum(data$IAV_scaled_cases[data$location==data$location[i] &
-                                         data$date>=data$date[i]-7*lag &
-                                         data$date<=data$date[i]]))
-      })
-  )
-}
-
-data$IAV_scaled_cases_lag1 <- sum_IAV_cases_lag(data, lag=1)
-data$IAV_scaled_cases_lag3 <- sum_IAV_cases_lag(data, lag=3)
-data$IAV_scaled_cases_lag5 <- sum_IAV_cases_lag(data, lag=5)
-
-data <- data %>% subset(date >= ymd("2014-01-01"))
-
-ggplot(data, aes(x=date)) +
+data %>%
+  ggplot(aes(x=date)) +
   facet_wrap(~location, ncol=3, scales="free_y") +
-  geom_line(aes(y=IAV_scaled_cases)) +
-  geom_line(aes(y=IAV_scaled_cases_lag1), col='red') +
-  geom_line(aes(y=IAV_scaled_cases_lag3), col='darkgreen') +
-  geom_line(aes(y=IAV_scaled_cases_lag5), col='orange')
+  geom_vline(xintercept=years, lwd=0.5, lty='dotted') +
+  geom_line(aes(y=IAV_scaled_cases), col="red") +
+  geom_line(aes(y=IBV_scaled_cases), col="blue") +
+  theme_bw() +
+  theme(axis.title.x=element_blank(), axis.text.x=element_text(size=9))
+
+data <- data[order(data$date),]
+data <- data %>% subset(date >= ymd("2014-01-01"))
 
 data_us <- data %>% subset(location=="National")
 data_hhs1 <- data %>% subset(location=="HHS 1")
@@ -196,4 +186,4 @@ data_hhs9$c[match(mobility_mean_hhs9$week_ending, data_hhs9$date)] <- mobility_m
 data_hhs10$c[match(mobility_mean_hhs10$week_ending, data_hhs10$date)] <- mobility_mean_hhs10$trend4/100
 
 # save(data_us, data_hhs1, data_hhs2, data_hhs3, data_hhs4, data_hhs5,
-#      data_hhs6, data_hhs7, data_hhs8, data_hhs9, data_hhs10, file="Data_USA.RData")
+#      data_hhs6, data_hhs7, data_hhs8, data_hhs9, data_hhs10, file="USA/Data_USA_with_IBV.RData")
