@@ -38,6 +38,6 @@ Plot time series data and cross-wavelet analyses (`Plot_US_CA_Data_and_cross_wav
     npi=non-pharmaceutical interventions (includes (post-)pandemic period)<br>
     vi=viral interaction (estimates IAV effect on RV)
     - `Estim_NPI/` (estimates weekly effects of non-pharmaceutical interventions, without using mobility data)
-    - `SEIRS/` (adds an exposed stage E in the compartmental model)
+    - `Extensions/` (model extensions: (i) post-pandemic behavioral changes, (ii) the use of total IV incidence, i.e., including influenza B virus (IBV) detections, and (iii) the addition of an exposed RV stage E, i.e., infected but not yet infectious, in the compartmental model)
     - `LOO/` (exact Leave-one-out cross-validation)
     
