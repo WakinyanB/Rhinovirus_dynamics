@@ -1,0 +1,283 @@
+---
+title: "SIRS fit to RV cases (all USA and Canadian regions combined)"
+output: pdf_document
+date: "2026-07-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(plyr)
+library(lubridate)
+library(cowplot)
+library(ggpubr)
+library(rstan)
+
+source("Fit/Functions_fit.R")
+```
+
+# Data
+
+```{r}
+# import data
+load("Data/USA/Data_USA.RData")
+load("Data/Canada/data_canada_province.RData")
+```
+
+```{r}
+data_hhs1$IAV_scaled_cases_smooth <- smooth_cases(data_hhs1)
+data_hhs2$IAV_scaled_cases_smooth <- smooth_cases(data_hhs2)
+data_hhs3$IAV_scaled_cases_smooth <- smooth_cases(data_hhs3)
+data_hhs4$IAV_scaled_cases_smooth <- smooth_cases(data_hhs4)
+data_hhs5$IAV_scaled_cases_smooth <- smooth_cases(data_hhs5)
+data_hhs6$IAV_scaled_cases_smooth <- smooth_cases(data_hhs6)
+data_hhs7$IAV_scaled_cases_smooth <- smooth_cases(data_hhs7)
+data_hhs8$IAV_scaled_cases_smooth <- smooth_cases(data_hhs8)
+data_hhs9$IAV_scaled_cases_smooth <- smooth_cases(data_hhs9)
+data_hhs10$IAV_scaled_cases_smooth <- smooth_cases(data_hhs10)
+
+data_at$IAV_scaled_cases_smooth <- smooth_cases(data_at)
+data_bc$IAV_scaled_cases_smooth <- smooth_cases(data_bc)
+data_on$IAV_scaled_cases_smooth <- smooth_cases(data_on)
+data_pr$IAV_scaled_cases_smooth <- smooth_cases(data_pr)
+```
+
+# Stan inputs
+
+```{r}
+n_chains <- 4 # = number of cores as well
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma <- 2 # approx 8 days for recovery
+mu <- 1/80/52 # natural mortality
+
+pop_us <- read.csv("Data/USA/State_2020_pop.csv")
+pop_ca <- read.csv("Data/Canada/Canada_pop_size.csv")
+
+pop_HHS <- pop_us %>% ddply(~HHS_region, function(X){
+  return(c('pop_2020'=sum(X$pop_2020)))
+})
+```
+
+```{r}
+n_week <- c(nrow(data_hhs2), nrow(data_hhs3), nrow(data_hhs4),
+            nrow(data_hhs5), nrow(data_hhs6), nrow(data_hhs7), nrow(data_hhs8),
+            nrow(data_hhs9), nrow(data_hhs10), nrow(data_bc),
+            nrow(data_on), nrow(data_pr))
+
+week <- c(data_hhs2$week, data_hhs3$week, data_hhs4$week, data_hhs5$week,
+          data_hhs6$week, data_hhs7$week, data_hhs8$week, data_hhs9$week, data_hhs10$week,
+          data_bc$week, data_on$week, data_pr$week)
+
+n_loc <- length(n_week)
+
+obs <- c(data_hhs2$RV_scaled_cases,
+         data_hhs3$RV_scaled_cases,
+         data_hhs4$RV_scaled_cases,
+         data_hhs5$RV_scaled_cases,
+         data_hhs6$RV_scaled_cases,
+         data_hhs7$RV_scaled_cases,
+         data_hhs8$RV_scaled_cases,
+         data_hhs9$RV_scaled_cases,
+         data_hhs10$RV_scaled_cases,
+         
+         data_bc$RV_scaled_cases,
+         data_on$RV_scaled_cases,
+         data_pr$RV_scaled_cases)
+
+obs_IAV_us <- c(data_hhs2$IAV_scaled_cases_smooth,
+                data_hhs3$IAV_scaled_cases_smooth,
+                data_hhs4$IAV_scaled_cases_smooth,
+                data_hhs5$IAV_scaled_cases_smooth,
+                data_hhs6$IAV_scaled_cases_smooth,
+                data_hhs7$IAV_scaled_cases_smooth,
+                data_hhs8$IAV_scaled_cases_smooth,
+                data_hhs9$IAV_scaled_cases_smooth,
+                data_hhs10$IAV_scaled_cases_smooth)
+
+obs_IAV_ca <- c(data_bc$IAV_scaled_cases_smooth,
+                data_on$IAV_scaled_cases_smooth,
+                data_pr$IAV_scaled_cases_smooth)
+
+
+data_stan <- list(
+  
+  n_country=2,
+  n_loc=n_loc,
+  n_data=sum(n_week),
+  n_week=n_week,
+  loc=rep(1:n_loc, times=n_week),
+  country=rep(1:2, times=c(sum(n_week[1:9]), sum(n_week[10:12]))),
+  week=ifelse(week==53, yes=1, no=week),
+  
+  obs=ifelse(obs==0, 0.1, obs),
+  
+  obs_IAV=c(obs_IAV_us/max(obs_IAV_us), obs_IAV_ca/max(obs_IAV_ca)),
+  
+  c=c(data_hhs2$c, data_hhs3$c, data_hhs4$c, data_hhs5$c, data_hhs6$c,
+      data_hhs7$c, data_hhs8$c, data_hhs9$c, data_hhs10$c, data_bc$c,
+      data_on$c, data_pr$c),
+  
+  pop=c(pop_HHS$pop_2020[-1],
+        pop_ca$pop_2021[pop_ca$Province=="British Columbia"],
+        pop_ca$pop_2021[pop_ca$Province=="Ontario"],
+        pop_ca$pop_2021[pop_ca$Province=="Prairies"]),
+  
+  gamma=gamma,
+  mu=mu
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_all_locations.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Output/fit_RV_SIRS_npi_vi_all_locations.RDS")
+p <- extract(fit)
+```
+
+```{r}
+i2 <- cumsum(data_stan$n_week)
+i1 <- c(1, i2[-length(i2)]+1)
+
+fit_cases <- (1:n_loc) %>% lapply(function(i){p$cases[,i1[i]:i2[i]]})
+
+fit_cases[[1]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs2$date, 'obs'=data_hhs2$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[2]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs3$date, 'obs'=data_hhs3$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[3]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs4$date, 'obs'=data_hhs4$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[4]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs5$date, 'obs'=data_hhs5$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[5]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs6$date, 'obs'=data_hhs6$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[6]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs7$date, 'obs'=data_hhs7$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[7]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs8$date, 'obs'=data_hhs8$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[8]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs9$date, 'obs'=data_hhs9$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[9]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_hhs10$date, 'obs'=data_hhs10$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[10]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_bc$date, 'obs'=data_bc$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[11]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_on$date, 'obs'=data_on$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+
+fit_cases[[12]] %>%
+  apply(2, quantile, probs=c(0.025,0.5,0.975)) %>%
+  t %>%
+  data.frame('date'=data_pr$date, 'obs'=data_pr$RV_scaled_cases) %>%
+  ggplot(aes(x=date)) +
+  geom_point(aes(y=obs), pch=21, cex=2) +
+  geom_line(aes(y=X50.), col='red') +
+  geom_ribbon(aes(ymin=X2.5., ymax=X97.5.), fill='red', alpha=0.25) +
+  theme_test()
+```
+
+```{r}
+p$omega %>% quantile(probs=c(0.025,0.5,0.975))
+
+p$phi %>% apply(2, quantile, probs=c(0.025,0.5,0.975)) %>% t
+```
