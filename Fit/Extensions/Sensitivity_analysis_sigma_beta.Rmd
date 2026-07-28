@@ -1,0 +1,242 @@
+---
+title: "SIRS fit to RV cases with fixed sigma_beta (national scale)"
+output: pdf_document
+date: "2025-03-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(plyr)
+library(lubridate)
+library(RColorBrewer)
+library(ggpubr)
+library(rstan)
+
+source("Fit/Functions_fit.R")
+```
+
+# Data (USA)
+
+```{r}
+# import data
+load("Data/USA/Data_USA.RData")
+load("Data/Canada/data_canada_province.RData")
+```
+
+```{r}
+data_us$IAV_scaled_cases_smooth <- smooth_cases(data_us)
+data_ca$IAV_scaled_cases_smooth <- smooth_cases(data_ca)
+
+plot_grid(
+  
+  ggplot(data_us, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ggplot(data_ca, aes(x=date)) +
+    geom_point(aes(y=IAV_scaled_cases), pch=1) +
+    geom_line(aes(y=IAV_scaled_cases_smooth)),
+  
+  ncol=2)
+```
+
+# Stan inputs
+
+```{r}
+n_chains <- 4 # = number of cores as well
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma <- 2 # approx 8 days for recovery
+mu <- 1/80/52 # natural mortality
+sigma_beta <- c(0.01,0.05,0.1,0.25) # vector of scale parameters for the transmission random-walk
+
+pop_us <- read.csv("Data/USA/State_2020_pop.csv")
+pop_ca <- read.csv("Data/Canada/Canada_pop_size.csv")
+```
+
+```{r}
+data_us_stan <- data_stan(data=data_us, mu=mu, gamma=gamma, pop=sum(pop_us$pop_2020))
+data_ca_stan <- data_stan(data=data_ca, mu=mu, gamma=gamma, pop=pop_ca$pop_2021[pop_ca$Province=="Canada"])
+```
+
+```{r}
+model <- stan_model("Fit/Stan_models/Fixed_sigma_beta/SIRS_npi_vi.stan")
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]",
+           "kappa", "phi", "omega", "rho", "S0", "E0", "I0", "sigma")
+```
+
+# Fit to US data
+
+```{r}
+output_path <- "Fit/Output/fit_RV_SIRS_npi_vi_us_sigma_beta_"
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[1]
+
+fit <- sampling(model, data=data_us_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[2]
+
+fit <- sampling(model, data=data_us_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[3]
+
+fit <- sampling(model, data=data_us_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[4]
+
+fit <- sampling(model, data=data_us_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+# Fit to Canadian data
+
+```{r}
+output_path <- "Fit/Output/fit_RV_SIRS_npi_vi_ca_sigma_beta_"
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[1]
+
+fit <- sampling(model, data=data_ca_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[2]
+
+fit <- sampling(model, data=data_ca_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[3]
+
+fit <- sampling(model, data=data_ca_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+```{r, eval=FALSE}
+sb <- sigma_beta[4]
+
+fit <- sampling(model, data=data_ca_stan %>% c(., 'sigma_beta'=sb),
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=15),
+                cores=n_chains)
+
+saveRDS(fit, paste0(output_path, gsub('\\.', '', sb), ".RDS"))
+```
+
+# Plot results
+
+```{r}
+phi_us <- cbind(
+  location='US',
+  rbind(
+    data.frame(sigma_beta='estimated',
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_us.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[1],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_us_sigma_beta_001.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[2],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_us_sigma_beta_005.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[3],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_us_sigma_beta_01.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[4],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_us_sigma_beta_025.RDS'))$phi))
+  )
+
+phi_ca <- cbind(
+  location='Canada',
+  rbind(
+    data.frame(sigma_beta='estimated',
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_ca.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[1],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_ca_sigma_beta_001.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[2],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_ca_sigma_beta_005.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[3],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_ca_sigma_beta_01.RDS'))$phi),
+    data.frame(sigma_beta=sigma_beta[4],
+               phi=extract(readRDS('Fit/Output/fit_RV_SIRS_npi_vi_ca_sigma_beta_025.RDS'))$phi))
+  )
+```
+
+```{r}
+sb_levels <- c('estimated', sigma_beta)
+colors <- c('black', brewer.pal(5, "OrRd")[-1])
+
+ggarrange( # landscape: 7 x 6
+  
+  phi_us %>%
+    mutate(sigma_beta=factor(sigma_beta, levels=sb_levels),
+           estimated=(sigma_beta=='estimated')) %>%
+    ggplot(aes(x=sigma_beta, y=phi, fill=sigma_beta)) +
+    geom_violin(alpha=0.5, trim=FALSE, col=NA) +
+    geom_boxplot(width=0.2, outlier.shape=NA, show.legend=FALSE, lwd=0.4, aes(col=estimated)) +
+    labs(title='US', x=expression(sigma[beta]), y=expression(hat(phi)), fill=expression(sigma[beta])) +
+    scale_fill_manual(values=colors) +
+    scale_color_manual(values=c('black','white')) +
+    theme(axis.title.x=element_blank(), axis.title.y=element_text(size=15),
+          axis.text.x=element_blank(), axis.ticks.x=element_blank(),
+          legend.title=element_text(size=16)),
+
+  phi_ca %>%
+    mutate(sigma_beta=factor(sigma_beta, levels=sb_levels),
+           estimated=(sigma_beta=='estimated')) %>%
+    ggplot(aes(x=sigma_beta, y=phi, fill=sigma_beta)) +
+    geom_violin(alpha=0.5, trim=FALSE, col=NA) +
+    geom_boxplot(width=0.2, outlier.shape=NA, show.legend=FALSE, lwd=0.4, aes(col=estimated)) +
+    labs(title='Canada', x=expression(sigma[beta]), y=expression(hat(phi)), fill=expression(sigma[beta])) +
+    scale_fill_manual(values=colors) +
+    scale_color_manual(values=c('black','white')) +
+    theme(axis.title.x=element_text(size=15), axis.title.y=element_text(size=15),
+          axis.text.x=element_text(margin=margin(2,0,10,0))),
+
+  ncol=1, common.legend=TRUE, legend='right', heights=c(0.45,0.55))
+```
