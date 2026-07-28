@@ -7,7 +7,7 @@ library(cowplot)
 library(ggpubr)
 library(rstan)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+setwd(".../Data_and_Codes")
 
 # Import data
 
