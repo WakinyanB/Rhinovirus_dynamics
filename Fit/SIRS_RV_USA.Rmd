@@ -6,7 +6,7 @@ date: "2025-03-19"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
 ```
 
 ```{r}

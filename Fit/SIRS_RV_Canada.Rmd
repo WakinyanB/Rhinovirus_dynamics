@@ -6,7 +6,7 @@ date: "2025-03-19"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
 ```
 
 ```{r}
@@ -18,7 +18,6 @@ library(lubridate)
 library(cowplot)
 library(ggpubr)
 library(rstan)
-library(bridgesampling)
 
 source("Fit/Functions_fit.R")
 ```
@@ -98,7 +97,6 @@ fit <- sampling(model, data=data_ca_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_ca.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_ca.RDS")
 ```
 
 ```{r}
@@ -133,7 +131,6 @@ The model didn't converge
 #                 cores=n_chains)
 # 
 # saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_at.RDS")
-# saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_at.RDS")
 ```
 
 ```{r}
@@ -166,7 +163,6 @@ fit <- sampling(model, data=data_bc_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_bc.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_bc.RDS")
 ```
 
 ```{r}
@@ -199,7 +195,6 @@ fit <- sampling(model, data=data_on_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_on.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_on.RDS")
 ```
 
 ```{r}
@@ -232,7 +227,6 @@ fit <- sampling(model, data=data_pr_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_pr.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_pr.RDS")
 ```
 
 ```{r}
@@ -273,7 +267,6 @@ fit <- sampling(model, data=data_ca_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_ca.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_ca.RDS")
 ```
 
 ```{r}
@@ -306,7 +299,6 @@ plot_beta(posterior)
 #                 cores=n_chains)
 # 
 # saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_at.RDS")
-# saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_at.RDS")
 ```
 
 ```{r}
@@ -339,7 +331,6 @@ fit <- sampling(model, data=data_bc_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_bc.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_bc.RDS")
 ```
 
 ```{r}
@@ -372,7 +363,6 @@ fit <- sampling(model, data=data_on_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_on.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_on.RDS")
 ```
 
 ```{r}
@@ -405,7 +395,6 @@ fit <- sampling(model, data=data_pr_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_pr.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_pr.RDS")
 ```
 
 ```{r}

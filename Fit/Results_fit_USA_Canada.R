@@ -10,7 +10,7 @@ library(ggnewscale)
 library(rstan)
 library(loo)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+setwd(".../Data_and_Codes")
 
 source("Fit/Functions.R")
 
@@ -220,7 +220,6 @@ colnames(phi_estim)[4:6] <- c('median', 'CI_lower', 'CI_upper')
 phi_estim$region <- phi_estim$region %>% factor(levels=rev(c(US_names, CA_names)))
 phi_estim$lag <- phi_estim$lag %>% factor(levels=c('5','3','1','0'),
                                           labels=c('5','3','1','0 (current incidence)'))
-
 pd <- position_dodge(width=0.6)
 
 x_lim <- c(-0.21,0.3)
@@ -259,152 +258,12 @@ plot_grid(
   
   ncol=1, rel_heights=c(0.65,0.35), align='v') # 6 x 4
 
+# ggsave('Fig4.eps', width=4, height=6)
+
 vi_factor <- list(
   'levels'=c('phi=0', paste('lag', c(0,1,3,5))),
   'labels'=c(bquote(phi==0), lapply(c(0,1,3,5), function(l){bquote(hat(phi)~'(lag='*.(l)*')')}))
 )
-
-loglik_us <- rbind(
-  cbind('location'='US (national)',
-        rbind(
-          data.frame(vi='phi=0', p_us %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_us_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_us_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_us_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_us_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 2',
-        rbind(
-          data.frame(vi='phi=0', p_hhs2 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs2_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs2_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs2_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs2_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 3',
-        rbind(
-          data.frame(vi='phi=0', p_hhs3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs3_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs3_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs3_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs3_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 4',
-        rbind(
-          data.frame(vi='phi=0', p_hhs4 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs4_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs4_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs4_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs4_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 5',
-        rbind(
-          data.frame(vi='phi=0', p_hhs5 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs5_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs5_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs5_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs5_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 6',
-        rbind(
-          data.frame(vi='phi=0', p_hhs6 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs6_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs6_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs6_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs6_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 7',
-        rbind(
-          data.frame(vi='phi=0', p_hhs7 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs7_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs7_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs7_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs7_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 8',
-        rbind(
-          data.frame(vi='phi=0', p_hhs8 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs8_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs8_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs8_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs8_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 9',
-        rbind(
-          data.frame(vi='phi=0', p_hhs9 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs9_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs9_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs9_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs9_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='HHS 10',
-        rbind(
-          data.frame(vi='phi=0', p_hhs10 %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_hhs10_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_hhs10_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_hhs10_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_hhs10_lag5 %>% summary_loglik %>% t)
-        ))
-  ) %>%
-  mutate(location=factor(location, levels=US_names),
-         vi=factor(vi, levels=vi_factor$levels))
-
-ggplot(loglik_us, aes(x=vi)) +
-  facet_wrap(~location, ncol=2, scales='free_y') +
-  labs(y='Log-likelihood\n') +
-  geom_segment(aes(y=CI_lower, yend=CI_upper), lwd=0.1) +
-  geom_point(aes(y=median), cex=0.8) +
-  scale_x_discrete(labels=vi_factor$labels) +
-  theme_test() +
-  theme(axis.title.x=element_blank(), axis.text.x=element_text(size=8, angle=30, hjust=1),
-        axis.text.y=element_text(size=7)) # landscape: 7 x 6
-
-loglik_ca <- rbind(
-  cbind('location'='Canada (national)',
-        rbind(
-          data.frame(vi='phi=0', p_ca %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_ca_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_ca_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_ca_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_ca_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='British Columbia',
-        rbind(
-          data.frame(vi='phi=0', p_bc %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_bc_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_bc_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_bc_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_bc_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='Ontario',
-        rbind(
-          data.frame(vi='phi=0', p_on %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_on_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_on_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_on_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_on_lag5 %>% summary_loglik %>% t)
-        )),
-  cbind('location'='Prairies',
-        rbind(
-          data.frame(vi='phi=0', p_pr %>% summary_loglik %>% t),
-          data.frame(vi='lag 0', p_pr_lag0 %>% summary_loglik %>% t),
-          data.frame(vi='lag 1', p_pr_lag1 %>% summary_loglik %>% t),
-          data.frame(vi='lag 3', p_pr_lag3 %>% summary_loglik %>% t),
-          data.frame(vi='lag 5', p_pr_lag5 %>% summary_loglik %>% t)
-        ))
-  ) %>%
-  mutate(location=factor(location, levels=CA_names),
-         vi=factor(vi, levels=vi_factor$levels))
-
-ggplot(loglik_ca, aes(x=vi)) +
-  facet_wrap(~location, ncol=2, scales='free_y') +
-  labs(y='Log-likelihood\n') +
-  geom_segment(aes(y=CI_lower, yend=CI_upper), lwd=0.1) +
-  geom_point(aes(y=median), cex=0.8) +
-  scale_x_discrete(labels=vi_factor$labels) +
-  theme_test() +
-  theme(axis.title.x=element_blank(), axis.text.x=element_text(size=8, angle=30, hjust=1),
-        axis.text.y=element_text(size=7)) # landscape: 5 x 6
 
 p_list_CA <- list("CA"=p_ca, "BC"=p_bc, "ON"=p_on, "PR"=p_pr)
 
@@ -446,7 +305,10 @@ beta_CA <- rbind(
   mutate(location=factor(location, levels=CA_names))
 
 plot_grid(
-  Plot_beta(beta_US, ylim=c(0.5,4.6), ncol=5) + theme(axis.text.x=element_text(size=7)),
+  Plot_beta(beta_US, ylim=c(0.5,4.6), ncol=5) +
+    scale_color_hue(direction=-1) +
+    scale_fill_hue(direction=-1) +
+    theme(axis.text.x=element_text(size=7), legend.position='none'),
   
   plot_distribution(p_list=p_list_US, parm="omega", duration=TRUE, scale=4,
                     xlab=expression(paste(hat(Omega), ", mean duration of immune protection (weeks)"))) +
@@ -455,7 +317,7 @@ plot_grid(
           axis.title.y=element_blank(), axis.text.y=element_text(size=10),
           legend.position='none'),
   
-  Plot_beta(beta_CA, ylim=c(0.8,2.1), ncol=2) + theme(plot.margin=unit(c(0,1.5,0,1.5), "cm")),
+  Plot_beta(beta_CA, ylim=c(0.8,2.1), ncol=2, colors=colors_CA) + theme(plot.margin=unit(c(0,1.5,0,1.5), "cm"), legend.position='none'),
   
   plot_distribution(p_list=p_list_CA, parm="omega", colors=colors_CA, duration=TRUE,
                     xlab=expression(paste(hat(Omega), ", mean duration of immune protection (weeks)"))) +
@@ -465,6 +327,24 @@ plot_grid(
           legend.position='none'),
   
   labels=LETTERS[1:4], rel_widths=c(0.6,0.4), rel_heights=c(0.55,0.45), ncol=2) # 10 x 7
+
+# ggsave('Fig5.tif', width=10, height=7, dpi=600)
+
+plot_grid(
+  plot_distribution(p_list=p_list_US, parm="omega", duration=TRUE, scale=4, xlab='') +
+    scale_x_continuous(breaks=seq(5,25,5), limits=c(0,28)) +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank(), axis.text.y=element_text(size=10),
+          legend.position='none'),
+  
+  plot_distribution(p_list=p_list_CA, parm="omega", xlab='', colors=colors_CA, duration=TRUE) +
+    scale_x_continuous(breaks=seq(5,25,5), limits=c(0,28)) +
+    theme(axis.title.x=element_text(size=10),
+          axis.title.y=element_blank(), axis.text.y=element_text(size=10),
+          legend.position='none'),
+  
+  align='hv', ncol=1, rel_heights=c(0.6,0.4))
+
+# ggsave('Omega_posterior.png', width=8, height=6, dpi=1000)
 
 plot_grid(
   
@@ -574,8 +454,8 @@ Re_US %>%
          CI_upper=pmin(CI_upper,1.7)) %>%
   ggplot(aes(x=date)) +
   facet_wrap(~location, ncol=2) +
-  labs(y="Effective reproduction number\n", col="mean\nchange\nin mobility",
-       fill="mean\nchange\nin mobility") +
+  labs(y="Effective reproduction number", col="mean change\nin mobility",
+       fill="mean change\nin mobility") +
   geom_rect(aes(xmin=date-1, xmax=date, ymin=-Inf, ymax=+Inf, fill=c, col=c)) +
   geom_vline(xintercept=ymd(paste0(2014:2025, "-01-01")),
              lty='dotted', col="grey40", lwd=0.2) +
@@ -591,6 +471,8 @@ Re_US %>%
                         midpoint=0, na.value=NA, label=scales::percent) +
   theme_test() +
   theme(axis.title.x=element_blank(), axis.text.x=element_text(size=8),
+        axis.title.y=element_text(margin=margin(r=10)),
+        legend.position='bottom', legend.key.width=unit(1.2,"cm"), legend.key.height = unit(0.4, "cm"),
         legend.title=element_text(size=8), legend.text=element_text(size=7)) # 9 x 7
 
 Re_CA <- rbind(
@@ -603,8 +485,8 @@ Re_CA <- rbind(
 Re_CA %>%
   ggplot(aes(x=date)) +
   facet_wrap(~location, ncol=2) +
-  labs(y="Effective reproduction number\n", col="mean\nchange\nin mobility",
-       fill="mean\nchange\nin mobility") +
+  labs(y="Effective reproduction number", col="mean change\nin mobility",
+       fill="mean change\nin mobility") +
   geom_rect(aes(xmin=date-1, xmax=date, ymin=-Inf, ymax=+Inf, fill=c, col=c)) +
   geom_vline(xintercept=ymd(paste0(2014:2025, "-01-01")),
              lty='dotted', col="grey40", lwd=0.3) +
@@ -620,6 +502,8 @@ Re_CA %>%
                         midpoint=0, na.value=NA, label=scales::percent) +
   theme_test() +
   theme(axis.title.x=element_blank(), axis.text.x=element_text(size=8),
+        axis.title.y=element_text(margin=margin(r=10)),
+        legend.position='bottom', legend.key.width=unit(1.2,"cm"), legend.key.height = unit(0.4, "cm"),
         legend.title=element_text(size=8), legend.text=element_text(size=7)) # 7 x 5
 
 plot_grid(
@@ -643,3 +527,47 @@ plot_grid(
     location="Canada", legend=FALSE),
   
   labels=LETTERS[1:2], ncol=2) # landscape: 9 x 7
+
+# ggsave('Fig3.tif', width=9, height=7, dpi=1000)
+
+summary_param <- function(p_list, parm){
+  return(
+    p_list %>% lapply(function(p){return(quantile(p[[parm]], probs=probs))}) %>%
+      bind_rows %>% rename_with(~ paste0(parm, c('', '_lower', '_upper')))
+  )
+}
+
+p_list <- list(p_us_lag0, p_hhs2_lag0, p_hhs3_lag0, p_hhs4_lag0, p_hhs5_lag0,
+               p_hhs6_lag0, p_hhs7_lag0, p_hhs8_lag0, p_hhs9_lag0, p_hhs10_lag0,
+               p_ca_lag0, p_bc_lag0, p_on_lag0, p_pr_lag0)
+
+df <- cbind(summary_param(p_list, parm='phi'), summary_param(p_list, parm='kappa'),
+            summary_param(p_list, parm='omega'), summary_param(p_list, parm='rho'), summary_param(p_list, parm='beta')) %>%
+  data.frame(country=c(rep('US', 10), rep('Canada', 4)), region=c(US_names, CA_names))
+
+ggarrange(
+  ggplot(df, aes(x=phi, col=country)) +
+    geom_segment(aes(y=phi, x=kappa_lower, xend=kappa_upper)) +
+    geom_segment(aes(x=kappa, y=phi_lower, yend=phi_upper)) +
+    geom_point(aes(x=kappa, y=phi)) +
+    labs(x=expression(hat(kappa)), y=expression(hat(phi))),
+  
+  ggplot(df, aes(x=phi, col=country)) +
+    geom_segment(aes(y=phi, x=omega_lower, xend=omega_upper)) +
+    geom_segment(aes(x=omega, y=phi_lower, yend=phi_upper)) +
+    geom_point(aes(x=omega, y=phi)) +
+    labs(x=expression(hat(omega)), y=expression(hat(phi))),
+  
+  ggplot(df, aes(x=phi, col=country)) +
+    geom_segment(aes(y=phi, x=rho_lower, xend=rho_upper)) +
+    geom_segment(aes(x=rho, y=phi_lower, yend=phi_upper)) +
+    geom_point(aes(x=rho, y=phi)) +
+    labs(x=expression(hat(rho)), y=expression(hat(phi))),
+  
+  ggplot(df, aes(x=phi, col=country)) +
+    geom_segment(aes(y=phi, x=beta_lower, xend=beta_upper)) +
+    geom_segment(aes(x=beta, y=phi_lower, yend=phi_upper)) +
+    geom_point(aes(x=beta, y=phi)) +
+    labs(x=expression(hat(beta)), y=expression(hat(phi))),
+  
+  common.legend = TRUE, nrow=2, ncol=2, labels=LETTERS[1:4])

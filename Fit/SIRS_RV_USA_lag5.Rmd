@@ -6,7 +6,7 @@ date: "2025-03-19"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
 ```
 
 ```{r}
@@ -18,7 +18,6 @@ library(lubridate)
 library(cowplot)
 library(ggpubr)
 library(rstan)
-library(bridgesampling)
 
 source("Fit/Functions_fit.R")
 ```
@@ -104,7 +103,6 @@ fit <- sampling(model, data=data_us_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_us_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_us_lag5.RDS")
 ```
 
 ```{r}
@@ -137,7 +135,6 @@ plot_beta(posterior)
 #                 cores=n_chains)
 # 
 # saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs1_lag5.RDS")
-#saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs1_lag5.RDS")
 ```
 
 ```{r}
@@ -170,7 +167,6 @@ fit <- sampling(model, data=data_hhs2_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs2_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs2_lag5.RDS")
 ```
 
 ```{r}
@@ -203,7 +199,6 @@ fit <- sampling(model, data=data_hhs3_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs3_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs3_lag5.RDS")
 ```
 
 ```{r}
@@ -236,7 +231,6 @@ fit <- sampling(model, data=data_hhs4_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs4_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs4_lag5.RDS")
 ```
 
 ```{r}
@@ -269,7 +263,6 @@ fit <- sampling(model, data=data_hhs5_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs5_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs5_lag5.RDS")
 ```
 
 ```{r}
@@ -302,7 +295,6 @@ fit <- sampling(model, data=data_hhs6_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs6_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs6_lag5.RDS")
 ```
 
 ```{r}
@@ -335,7 +327,6 @@ fit <- sampling(model, data=data_hhs7_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs7_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs7_lag5.RDS")
 ```
 
 ```{r}
@@ -368,7 +359,6 @@ fit <- sampling(model, data=data_hhs8_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs8_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs8_lag5.RDS")
 ```
 
 ```{r}
@@ -401,7 +391,6 @@ fit <- sampling(model, data=data_hhs9_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs9_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs9_lag5.RDS")
 ```
 
 ```{r}
@@ -434,7 +423,6 @@ fit <- sampling(model, data=data_hhs10_stan,
                 cores=n_chains)
 
 saveRDS(fit, "Fit/Output/fit_RV_SIRS_npi_vi_hhs10_lag5.RDS")
-saveRDS(bridge_sampler(fit), file="Fit/Output/bridge_RV_SIRS_npi_vi_hhs10_lag5.RDS")
 ```
 
 ```{r}
