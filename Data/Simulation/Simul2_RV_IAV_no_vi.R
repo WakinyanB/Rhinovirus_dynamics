@@ -5,7 +5,7 @@ library(dplyr)
 library(lubridate)
 library(deSolve)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Data/Simulation_v2")
+setwd(".../Data_and_Codes/Data/Simulation_v2")
 
 source("Function_simulation.R")
 

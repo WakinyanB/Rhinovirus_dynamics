@@ -5,7 +5,7 @@ library(dplyr)
 library(lubridate)
 library(deSolve)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Data/Simulation_v2")
+setwd(".../Data_and_Codes/Data/Simulation")
 
 source("Function_simulation.R")
 
@@ -145,6 +145,17 @@ obs_iav$cases_noisy <- obs_iav$cases*exp(rnorm(nrow(obs_iav), 0, sigma))
 obs_iav$smooth_cases_noisy <- smooth_cases(obs_iav$cases_noisy)
 
 save(obs_rv, obs_iav, file="cases_1.RData")
+
+# Higher SD of observation errors (log scale)
+sigma2 <- 0.5
+
+set.seed(101)
+obs_rv$cases_noisy <- obs_rv$cases*exp(rnorm(nrow(obs_rv), 0, sigma2))
+obs_iav$cases_noisy <- obs_iav$cases*exp(rnorm(nrow(obs_iav), 0, sigma2))
+
+obs_iav$smooth_cases_noisy <- smooth_cases(obs_iav$cases_noisy)
+
+save(obs_rv, obs_iav, file="cases_1_SDhigh.RData")
 
 ## --------------- PERTURBATION PRE-PANDEMIC ---------------
 
