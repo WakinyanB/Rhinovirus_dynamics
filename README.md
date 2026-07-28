@@ -19,7 +19,7 @@ Plot time series data and cross-wavelet analyses (`Plot_US_CA_Data_and_cross_wav
   - `Google_mobility/`<br>
     Google COVID-19 Community Mobility Reports for the US and Canada and corresponding R scripts
   - `Simulation/`<br>
-    Simulated data (scenarios 1, 2 and 3, and scenario extensions 'shift' and 'kick'), as well as R scripts to generate them
+    Simulated data (scenarios 1, 2 and 3, and scenario extensions 'shift' and 'kick'), as well as R scripts to generate them; we also explored different parameter values for scenario 2 (sensitivity)
   - `USA/`<br>
     US time series data (`Data_USA.RData`, see below for raw data) and census data (`State_2020_pop.csv`)
     - `FluView/` (raw data for IAV)
