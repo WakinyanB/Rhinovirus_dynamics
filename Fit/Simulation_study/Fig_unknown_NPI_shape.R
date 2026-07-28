@@ -5,7 +5,7 @@ library(plyr)
 library(scales)
 library(rstan)
 
-setwd('C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/')
+setwd('.../Data_and_Codes/')
 
 x_labs <- (1:2) %>% factor(labels=c('Known', 'Unknown'))
 
@@ -15,12 +15,12 @@ gamma=2
 
 # ------------------ Scenario 2 ------------------------------------------------
 
-load("Data/Simulation_v2/cases_2.RData")
-SIR <- read.csv2("Data/Simulation_v2/SIR_2.csv")
-parms <- readRDS("Data/Simulation_v2/parms_simul_2.rds")
+load("Data/Simulation/cases_2.RData")
+SIR <- read.csv2("Data/Simulation/SIR_2.csv")
+parms <- readRDS("Data/Simulation/parms_simul_2.rds")
 
-p2 <- readRDS('Fit/Simulation_study2/Output/fit_RV_SIRS_npi_vi_simul2.RDS') %>% extract # knowing NPIs shapes
-p2_estim_all_npi <- readRDS('Fit/Simulation_study2/Output/fit_RV_SIRS_npi_vi_simul2_npi_estim.RDS') %>% extract # Estimating all NPIs
+p2 <- readRDS('Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2.RDS') %>% extract # knowing NPIs shapes
+p2_estim_all_npi <- readRDS('Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_npi_estim.RDS') %>% extract # Estimating all NPIs
 
 phi2 <- rbind(data.frame(id=x_labs[1], phi=p2$phi),
               data.frame(id=x_labs[2], phi=p2_estim_all_npi$phi))
@@ -78,12 +78,12 @@ colnames(beta2)[3:5] <- c('CI95_lower', 'median', 'CI95_upper')
 
 # ------------------ Scenario 3 ------------------------------------------------
 
-load("Data/Simulation_v2/cases_3.RData")
-SIR <- read.csv2("Data/Simulation_v2/SIR_3.csv")
-parms <- readRDS("Data/Simulation_v2/parms_simul_3.rds")
+load("Data/Simulation/cases_3.RData")
+SIR <- read.csv2("Data/Simulation/SIR_3.csv")
+parms <- readRDS("Data/Simulation/parms_simul_3.rds")
 
-p3 <- readRDS('Fit/Simulation_study2/Output/fit_RV_SIRS_npi_vi_simul3.RDS') %>% extract # knowing NPIs shapes
-p3_estim_all_npi <- readRDS('Fit/Simulation_study2/Output/fit_RV_SIRS_npi_vi_simul3_npi_estim.RDS') %>% extract # Estimating all NPIs
+p3 <- readRDS('Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul3.RDS') %>% extract # knowing NPIs shapes
+p3_estim_all_npi <- readRDS('Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul3_npi_estim.RDS') %>% extract # Estimating all NPIs
 
 phi3 <- rbind(data.frame(id=x_labs[1], phi=p3$phi),
               data.frame(id=x_labs[2], phi=p3_estim_all_npi$phi))
@@ -149,3 +149,9 @@ plot_grid(
   plot_grid(Fig_fit3, plot_grid(Fig_phi3, Fig_beta3, align='h', labels=c('E','F'), ncol=2), labels='D', ncol=1),
   ncol=1
 ) # 9 x 7
+
+
+plot_grid(Fig_fit3 + theme(plot.title=element_blank()),
+          plot_grid(Fig_phi3, Fig_beta3, align='h', labels=c('B','C'), ncol=2), labels='A', ncol=1)
+
+ggsave('Unknown_NPI_scenario3.png', width=7, height=4.5, dpi=1000)

@@ -7,8 +7,8 @@ library(cowplot)
 library(scales)
 library(ggpubr)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/")
-source("Fit/Simulation_study2/Functions.R")
+setwd(".../Data_and_Codes/")
+source("Fit/Simulation_study/Functions.R")
 
 # Load simulated data/parameters and estimated posterior distributions
 
@@ -16,20 +16,20 @@ parm_names <- c("beta", "kappa", "omega", "rho", "S0", "I0")
 
 # ----------- Simulated dataset 1 ----------------------------------------------
 
-load("Fit/Simulation_study2/Posterior_simul1.RData")
+load("Fit/Simulation_study/Posterior_simul1.RData")
 
-SIR1 <- read.csv2("Data/Simulation_v2/SIR_1.csv")
-SIR1_kick <- read.csv2("Data/Simulation_v2/SIR_kick_1.csv")
-SIR1_shift <- read.csv2("Data/Simulation_v2/SIR_shift_1.csv")
+SIR1 <- read.csv2("Data/Simulation/SIR_1.csv")
+SIR1_kick <- read.csv2("Data/Simulation/SIR_kick_1.csv")
+SIR1_shift <- read.csv2("Data/Simulation/SIR_shift_1.csv")
 
-parms1 <- readRDS("Data/Simulation_v2/parms_simul_1.rds")
+parms1 <- readRDS("Data/Simulation/parms_simul_1.rds")
 parms1_rv <- parms1 %>% extract_parms_rv(init=SIR1[1,])
 parms1_kick_rv <- parms1 %>% extract_parms_rv(init=SIR1_kick[1,])
 parms1_shift_rv <- parms1 %>% extract_parms_rv(init=SIR1_shift[1,])
 
-load("Data/Simulation_v2/cases_1.RData")
-load("Data/Simulation_v2/cases_kick_1.RData")
-load("Data/Simulation_v2/cases_shift_1.RData")
+load("Data/Simulation/cases_1.RData")
+load("Data/Simulation/cases_kick_1.RData")
+load("Data/Simulation/cases_shift_1.RData")
 
 obs1_rv <- obs_rv
 obs1_shift_rv <- obs_shift_rv
@@ -37,20 +37,20 @@ obs1_kick_rv <- obs_kick_rv
 
 # ----------- Simulated dataset 2 ----------------------------------------------
 
-load("Fit/Simulation_study2/Posterior_simul2.RData")
+load("Fit/Simulation_study/Posterior_simul2.RData")
 
-SIR2 <- read.csv2("Data/Simulation_v2/SIR_2.csv")
-SIR2_kick <- read.csv2("Data/Simulation_v2/SIR_kick_2.csv")
-SIR2_shift <- read.csv2("Data/Simulation_v2/SIR_shift_2.csv")
+SIR2 <- read.csv2("Data/Simulation/SIR_2.csv")
+SIR2_kick <- read.csv2("Data/Simulation/SIR_kick_2.csv")
+SIR2_shift <- read.csv2("Data/Simulation/SIR_shift_2.csv")
 
-parms2 <- readRDS("Data/Simulation_v2/parms_simul_2.rds")
+parms2 <- readRDS("Data/Simulation/parms_simul_2.rds")
 parms2_rv <- parms2 %>% extract_parms_rv(init=SIR2[1,])
 parms2_kick_rv <- parms2 %>% extract_parms_rv(init=SIR2_kick[1,])
 parms2_shift_rv <- parms2 %>% extract_parms_rv(init=SIR2_shift[1,])
 
-load("Data/Simulation_v2/cases_2.RData")
-load("Data/Simulation_v2/cases_kick_2.RData")
-load("Data/Simulation_v2/cases_shift_2.RData")
+load("Data/Simulation/cases_2.RData")
+load("Data/Simulation/cases_kick_2.RData")
+load("Data/Simulation/cases_shift_2.RData")
 
 obs2_rv <- obs_rv
 obs2_shift_rv <- obs_shift_rv
@@ -58,20 +58,20 @@ obs2_kick_rv <- obs_kick_rv
 
 # ----------- Simulated dataset 3 ----------------------------------------------
 
-load("Fit/Simulation_study2/Posterior_simul3.RData")
+load("Fit/Simulation_study/Posterior_simul3.RData")
 
-SIR3 <- read.csv2("Data/Simulation_v2/SIR_3.csv")
-SIR3_kick <- read.csv2("Data/Simulation_v2/SIR_kick_3.csv")
-SIR3_shift <- read.csv2("Data/Simulation_v2/SIR_shift_3.csv")
+SIR3 <- read.csv2("Data/Simulation/SIR_3.csv")
+SIR3_kick <- read.csv2("Data/Simulation/SIR_kick_3.csv")
+SIR3_shift <- read.csv2("Data/Simulation/SIR_shift_3.csv")
 
-parms3 <- readRDS("Data/Simulation_v2/parms_simul_3.rds")
+parms3 <- readRDS("Data/Simulation/parms_simul_3.rds")
 parms3_rv <- parms3 %>% extract_parms_rv(init=SIR3[1,])
 parms3_kick_rv <- parms3 %>% extract_parms_rv(init=SIR3_kick[1,])
 parms3_shift_rv <- parms3 %>% extract_parms_rv(init=SIR3_shift[1,])
 
-load("Data/Simulation_v2/cases_3.RData")
-load("Data/Simulation_v2/cases_kick_3.RData")
-load("Data/Simulation_v2/cases_shift_3.RData")
+load("Data/Simulation/cases_3.RData")
+load("Data/Simulation/cases_kick_3.RData")
+load("Data/Simulation/cases_shift_3.RData")
 
 obs3_rv <- obs_rv
 obs3_shift_rv <- obs_shift_rv
@@ -99,7 +99,7 @@ beta3 <- parms3$b0_rv*(1+parms3$a1_rv*cos(4*pi*((1:52)/52-parms3$d1_rv))+
     ggplot(aes(x=Week, y=beta)) +
     facet_wrap(~scenario) +
     geom_line(aes(col=Interaction, lty=Interaction, linewidth=Interaction)) +
-    labs(y="RV seasonal\ntransmission rate (/week)\n") +
+    labs(x='Week\n',y="RV seasonal\ntransmission rate (/week)\n") +
     scale_x_continuous(expand=c(0,0), breaks=c(1,seq(10,50,10))) +
     scale_y_continuous(expand=c(0,0), limits=c(1.15,2.6)) +
     scale_color_manual(values=c('#0D4ABA', "#3B7BF1"),
@@ -122,7 +122,7 @@ beta3 <- parms3$b0_rv*(1+parms3$a1_rv*cos(4*pi*((1:52)/52-parms3$d1_rv))+
   
   data.frame("Week"=1:52, "beta"=parms2$b0_iav*(1+parms2$a_iav*cos(2*pi*(1:52)/52-parms2$d_iav))) %>%
     ggplot(aes(x=Week, y=beta)) +
-    labs(y="IAV seasonal\ntransmission rate (/week)\n") +
+    labs(x='Week\n', y="IAV seasonal\ntransmission rate (/week)\n") +
     geom_line(col="#EE6251", linewidth=0.7) +
     scale_x_continuous(expand=c(0,0), breaks=c(1,seq(10,50,10))) +
     scale_y_continuous(expand=c(0,0), limits=c(1.75,3.15)) +
@@ -319,37 +319,6 @@ beta_rel_error <- rbind(
          npi=factor(npi, levels=c('0', '1'), labels=c('Using prepandemic data', 'Including (post-)pandemic data')),
          text_col=ifelse(abs(abs_dist)>0.3, 'white', 'black'))
 
-# plot_grid(
-#   
-#   Fig_beta,
-#   
-#   plot_grid(
-#     
-#     ggdraw() + draw_label(expression('Max. change-fold in force of infection due to viral interaction 1 +'~hat(phi)), size=15, x=0.05, hjust=0),
-#     
-#     Heatmap_rel_error(vi_rel_err, value_size=4) +
-#       theme(axis.text.x=element_text(size=8, angle=0, hjust=0.5),
-#             plot.margin=margin(t=5, r=80, b=5, l=80)),
-#     
-#     ggdraw() + draw_label(expression('RV seasonal transmission estimator'~hat(beta)(t)), size=15, x=0.05, hjust=0),
-#     
-#     ggarrange(
-#       
-#       Heatmap_rel_error(subset(beta_rel_error, week==k[1] & vi=='1'), lim_col=0.35) +
-#         labs(title='Week 30 (IAV trough)') +
-#         theme(plot.title=element_text(size=11)),
-#       
-#       Heatmap_rel_error(subset(beta_rel_error, week==k[2] & vi=='1'), lim_col=0.35) +
-#         labs(title='Week 52 (IAV peak)') +
-#         theme(plot.title=element_text(size=11, hjust=0.5),
-#               axis.title.y=element_blank(), axis.text.y=element_blank()),
-#       
-#       widths=c(0.55,0.45), legend='none'),
-#     
-#     rel_heights=c(0.15,0.75,0.15,1), ncol=1, labels=c('C','','D','')),
-#   
-#   ncol=1, rel_heights=c(0.25,0.75)) # 11 x 10.5
-
 Legend <- ggplot() +
   geom_ribbon(data=data.frame(vi=c('0 (fixed)','estimated')),
               aes(x=vi, ymin=0, ymax=1, fill=vi, col=vi), alpha=0.5) +
@@ -393,11 +362,13 @@ plot_grid(
       scale_y_continuous(breaks=seq(1,3.5,0.5)) +
       theme(legend.position='none', axis.title.y=element_blank()),
     
-    labels=c(rep('',3), LETTERS[3:8]), label_y=1.1, rel_heights=c(0.05,0.5,0.5)),
+    labels=c(rep('',3), LETTERS[3:8]), label_y=c(rep(1.15,6), rep(1.1,3)), rel_heights=c(0.05,0.5,0.5)),
   
   get_legend(Legend + theme(legend.title=element_text(size=15), legend.text=element_text(size=10))),
   
   rel_heights=c(0.35,0.6,0.05), ncol=1) # 10 x 8.5
+
+# ggsave('Fig2.tif', width=10, height=8.5, dpi=1000)
 
 plot_grid(
   

@@ -4,7 +4,7 @@ library(tidyverse)
 library(plyr)
 library(rstan)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Fit/Simulation_study2")
+setwd(".../Simulation_study")
 
 ######################### Fit for simulated dataset #1 #########################
 

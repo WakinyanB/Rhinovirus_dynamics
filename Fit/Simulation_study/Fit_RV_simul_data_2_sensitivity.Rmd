@@ -1,0 +1,596 @@
+---
+title: "Fit SIRS to RV cases (simulated data #2) -- sensitivity analysis"
+output: pdf_document
+date: "2026-07-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
+```
+
+```{r}
+rm(list=ls())
+
+library(tidyverse)
+library(dplyr)
+library(cowplot)
+library(rstan)
+```
+
+```{r}
+n_chains <- 4
+n_warmup <- 2000
+n_iter <- n_warmup + 2000
+
+gamma_rv <- log(1/(1-7/8)) # approx 8 days on average
+mu <- 1/80/52
+pop <- 5E+6
+```
+
+```{r}
+plot_fit <- function(posterior, data){
+  return(
+    data.frame("time"=1:data$n_week,
+               "observed"=data$obs,
+               "fitted"=apply(posterior$cases, 2, median),
+               "lower"=apply(posterior$cases, 2, quantile, probs=0.025),
+               "upper"=apply(posterior$cases, 2, quantile, probs=0.975)) %>%
+      ggplot(aes(x=time)) +
+      geom_ribbon(aes(ymin=lower, ymax=upper), fill="red", alpha=0.5) + # Credible interval
+      geom_line(aes(y=fitted), color = "red", linewidth=0.1) + # Posterior median
+      geom_point(aes(y = observed), cex=0.5) + # Observed cases
+      theme_minimal() +
+      theme(axis.title.x=element_blank())
+  )
+}
+
+plot_beta <- function(posterior){
+  return(
+    posterior$beta %>% apply(2, function(X){
+      return(data.frame("mean"=mean(X),
+                        "CI95_lower"=quantile(X, probs=0.025),
+                        "CI95_upper"=quantile(X, probs=0.975), row.names=NULL))
+  }) %>% bind_rows %>% cbind("week"=1:52,.) %>%
+    ggplot(aes(x=week, y=mean)) +
+    geom_ribbon(aes(ymin=CI95_lower, ymax=CI95_upper), fill="red", col=NA, alpha=0.5) +
+    geom_line(aes(y=mean), col="red") +
+    theme_classic()
+  )
+}
+```
+
+```{r}
+parms <- c("logbeta0", "eps_beta[1]", "eps_beta[2]", "eps_beta[3]", "eps_beta[4]", "sigma_beta",
+           "kappa", "phi", "omega", "rho", "S0", "I0", "sigma")
+
+model <- stan_model("Fit/Stan_models/SIRS_npi_vi.stan")
+```
+
+# Omega[1]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_omega1.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_omega1.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_omega1.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_omega1.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# Omega[2]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_omega2.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_omega2.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_omega2.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_omega2.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# kappa_rv[1]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_kappa_rv1.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_kappa_rv1.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_rv1.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_rv1.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# kappa_rv[2]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_kappa_rv2.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_kappa_rv2.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.96, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_rv2.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_rv2.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# kappa_iav[1]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_kappa_iav1.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_kappa_iav1.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=101,
+                control=list(adapt_delta=0.95, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_iav1.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_iav1.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# kappa_iav[2]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_kappa_iav2.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_kappa_iav2.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.96, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_iav2.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_kappa_iav2.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# a_iav[1]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_a_iav1.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_a_iav1.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.95, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_a_iav1.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_a_iav1.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```
+
+# a_iav[2]
+
+## Import and plot simulated data
+
+```{r}
+load("Data/Simulation/cases_2_a_iav2.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2_a_iav2.rds")
+
+plot_grid(
+  ggplot(obs_rv, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ggplot(obs_iav, aes(x=time/52)) +
+    geom_point(aes(y=cases_noisy)) +
+    geom_point(aes(y=smooth_cases_noisy), col="red") +
+    geom_line(aes(y=cases)) +
+    scale_x_continuous(breaks=0:10),
+  ncol=1)
+```
+
+## Fit all data with potential viral interaction
+
+```{r}
+data_stan <- list(
+  n_week=nrow(obs_rv),
+  week=obs_rv$week,
+  obs=obs_rv$cases_noisy,
+  obs_IAV=obs_iav$smooth_cases_noisy/max(obs_iav$smooth_cases_noisy),
+  c=obs_rv$c,
+  gamma=gamma_rv,
+  mu=mu,
+  pop=pop
+)
+```
+
+```{r, eval=FALSE}
+fit <- sampling(model, data=data_stan,
+                chains=n_chains, iter=n_iter, warmup=n_warmup, seed=1001,
+                control=list(adapt_delta=0.96, max_treedepth=12),
+                cores=n_chains)
+
+saveRDS(fit, "Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_a_iav2.RDS")
+```
+
+```{r}
+fit <- readRDS("Fit/Simulation_study/Output/fit_RV_SIRS_npi_vi_simul2_a_iav2.RDS")
+
+check_hmc_diagnostics(fit)
+get_num_divergent(fit)
+get_num_max_treedepth(fit)
+get_low_bfmi_chains(fit)
+get_bfmi(fit)
+
+summary(fit)$summary[c(1:5,53:60),]
+```
+
+```{r}
+posterior <- extract(fit)
+
+traceplot(fit, pars=parms)
+pairs(fit, pars=parms)
+plot_fit(posterior, data_stan)
+plot_beta(posterior)
+```

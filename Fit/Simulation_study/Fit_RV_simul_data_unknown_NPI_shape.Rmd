@@ -6,7 +6,7 @@ date: "2025-03-19"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir="C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+knitr::opts_knit$set(root.dir=".../Data_and_Codes")
 ```
 
 ```{r}
@@ -63,8 +63,8 @@ model <- stan_model("Fit/Stan_models/Estim_NPI/SIRS_npi_vi.stan")
 ## Import and plot simulated data #2
 
 ```{r}
-load("Data/Simulation_v2/cases_2.RData")
-real_parms <- readRDS("Data/Simulation_v2/parms_simul_2.rds")
+load("Data/Simulation/cases_2.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_2.rds")
 
 obs_rv <- obs_rv
 obs_iav <- obs_iav
@@ -141,8 +141,8 @@ plot_beta(posterior)
 ## Import and plot simulated data #3
 
 ```{r}
-load("Data/Simulation_v2/cases_3.RData")
-real_parms <- readRDS("Data/Simulation_v2/parms_simul_3.rds")
+load("Data/Simulation/cases_3.RData")
+real_parms <- readRDS("Data/Simulation/parms_simul_3.rds")
 
 obs_rv <- obs_rv
 obs_iav <- obs_iav
