@@ -6,7 +6,7 @@ library(rstan)
 library(loo)
 library(cowplot)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes")
+setwd(".../Data_and_Codes")
 
 load("Data/USA/Data_USA.RData")
 load("Data/Canada/data_canada_province.RData")
@@ -512,4 +512,3 @@ plot_grid(
           plot.margin=unit(c(0.2,0.2,2.65,0.3), "cm")),
   
   ncol=2, rel_widths=c(0.6,0.4), labels=LETTERS[1:2]) # 8 x 6
-
