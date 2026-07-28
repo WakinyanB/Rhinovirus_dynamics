@@ -4,7 +4,7 @@ library(tidyverse)
 library(plyr)
 library(lubridate)
 
-setwd("C:/Users/wb9928/OneDrive - Princeton University/Desktop/RV/Data_and_Codes/Data/")
+setwd(".../Data_and_Codes/Data/")
 
 pop_size <- read.csv("Canada/Canada_pop_size.csv")
 
