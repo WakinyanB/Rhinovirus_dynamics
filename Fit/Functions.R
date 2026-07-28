@@ -1,3 +1,5 @@
+library(ggridges)
+
 # Summary statistics
 
 compute_median_95CI <- function(x){
@@ -114,23 +116,29 @@ plot_distribution <- function(p_list, parm, xlab, colors=NULL, scale=2, duration
 
 ## Transmission rate
 
-Plot_beta <- function(beta, ylim, ncol, dt=1, mu=1/80/52, gamma=2){
-  return(
-    beta %>%
-      ggplot(aes(x=Week)) +
-      facet_wrap(~location, ncol=ncol) +
-      labs(y=expression(paste(hat(beta), ", seasonal transmission rate (",week^{-1},")"))) +
-      geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper), fill="#EF9AA2", col=NA, alpha=0.55) +
-      geom_line(aes(y=median), col="#E81C2C") +
-      scale_x_continuous(expand=c(0,0), breaks=c(1,seq(10,50,10))) +
-      scale_y_continuous(expand=c(0,0), limits=ylim,
-                         sec.axis=sec_axis(
-                           transform=~.*(1-exp(-mu*dt))/(1-exp(-(gamma+mu)*dt))/mu,
-                           name=expression(paste(hat(R)[0], ", basic reproduction number")))) +
-      theme_test() +
-      theme(axis.title.y.left=element_text(margin=margin(r=10, unit="pt")),
-            axis.title.y.right=element_text(margin=margin(l=10, unit="pt")))
-  )
+Plot_beta <- function(beta, ylim, ncol, dt=1, mu=1/80/52, gamma=2, colors=NULL){
+  
+  Fig <- beta %>%
+    ggplot(aes(x=Week)) +
+    facet_wrap(~location, ncol=ncol) +
+    labs(y=expression(paste(hat(beta), ", seasonal transmission rate (",week^{-1},")"))) +
+    geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper, fill=location), col=NA, alpha=0.25) +
+    geom_line(aes(y=median, col=location)) +
+    scale_x_continuous(expand=c(0,0), breaks=c(1,seq(10,50,10))) +
+    scale_y_continuous(expand=c(0,0), limits=ylim,
+                       sec.axis=sec_axis(
+                         transform=~.*(1-exp(-mu*dt))/(1-exp(-(gamma+mu)*dt))/mu,
+                         name=expression(paste(hat(R)[0], ", basic reproduction number")))) +
+    theme_test() +
+    theme(axis.title.y.left=element_text(margin=margin(r=10, unit="pt")),
+          axis.title.y.right=element_text(margin=margin(l=10, unit="pt")))
+  
+  if(length(colors)==0){
+    return(Fig)
+  }else{
+    return(Fig + scale_color_manual(values=colors) +
+                 scale_fill_manual(values=colors))
+  }
 }
 
 ## Fitted values for S, I and cases (+ obs)
@@ -235,7 +243,7 @@ plot_SI_fit2 <- function(SI, fit, Re, location,
       ggplot(fit, aes(x=date)) +
         labs(y='Detections', col=expression(phi), fill=expression(phi)) +
         npi_period + vlines +
-        geom_point(aes(y=obs), pch=21, stroke=0.005, size=1, alpha=0.8) +
+        geom_point(aes(y=obs), pch=21, stroke=0.25, size=1, alpha=0.8) +
         geom_ribbon(aes(ymin=CI_lower, ymax=CI_upper, fill=vi), col=NA, alpha=0.2) +
         geom_line(aes(y=median, col=vi), lwd=0.3) +
         scale_x_date(expand=c(0,0), breaks=ymd(paste0(seq(2014,2024,2), '-01-01')), date_labels="%Y") +
