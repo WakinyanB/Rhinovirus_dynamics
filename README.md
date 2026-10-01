@@ -4,7 +4,8 @@ Data & Codes for:<br>
 
 **Leveraging perturbations to infer the population dynamics of human rhinovirus and interaction of influenza A virus**
 
-*Wakinyan Benhamou<sup>1,2</sup>, Emily Howerton<sup>1,2</sup>, Sang Woo Park<sup>3,4</sup>, Cécile Viboud<sup>5</sup>, C. Jessica E. Metcalf<sup>1,2,6</sup> and Bryan T. Grenfell<sup>1,2,6</sup>*
+*Wakinyan Benhamou<sup>1,2</sup>, Emily Howerton<sup>1,2</sup>, Sang Woo Park<sup>3,4</sup>, Cécile Viboud<sup>5</sup>,<br>
+C. Jessica E. Metcalf<sup>1,2,6</sup> and Bryan T. Grenfell<sup>1,2,6</sup>*
 
 <sub>*<sup>1</sup> Department of Ecology and Evolutionary Biology, Princeton University, Princeton, NJ, USA*<br>
 *<sup>2</sup> High Meadows Environmental Institute, Princeton University, Princeton, NJ, USA*<br>
